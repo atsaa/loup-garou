@@ -1,0 +1,68 @@
+html, body {
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    font-family: sans-serif; /* Police par défaut en attendant Berkshire Swash */
+    background-color: #2c3e50; /* Arrière-plan sombre thématique */
+    display: flex;
+    justify-content: center; /* Centre horizontalement */
+    align-items: center;     /* Centre verticalement */
+}
+
+/* --- Style de la "Boîte" Centrale --- */
+.boite-accueil {
+    background: white;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    width: 100%;
+    max-width: 400px; /* Limite la largeur sur les grands écrans */
+}
+
+h1 {
+    font-family: 'Berkshire Swash', serif; /* Application de la police thématique */
+    color: #c0392b; /* Rouge sang */
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+}
+
+/* --- Style de l'Input et des Boutons --- */
+input, button {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+    box-sizing: border-box; /* Assure que le padding n'augmente pas la largeur totale */
+    font-size: 1rem;
+}
+
+input {
+    border: 1px solid #ccc;
+    font-family: sans-serif; /* L'input reste lisible avec une police standard */
+}
+
+button {
+    border: none;
+    cursor: pointer;
+    color: white;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+#btn-rejoindre {
+    background-color: #27ae60; /* Vert pour "rejoindre" */
+}
+
+#btn-rejoindre:hover {
+    background-color: #2ecc71;
+}
+
+#btn-creer {
+    background-color: #3498db; /* Bleu pour "créer" */
+}
+
+#btn-creer:hover {
+    background-color: #2980b9;
+}

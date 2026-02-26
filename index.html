@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!--<meta name="viewport" content="width=device-width, initial-scale=1.0,
+     interactive-widget=resizes-content">-->
+    <title>loup garou</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Creepster&family=MedievalSharp&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css.css">
+</head>
+<body>
+    <div id="Accueil" style="display: block;">
+        <div class="container">
+            <input type="text" id="nameInput" placeholder="Entrez votre nom">
+            <button class="btn1">Rejoindre une salle</button>
+            <button class="btn2", onclick="creerNouvellePartie()">creer une partie</button>
+        </div>
+    </div>
+    <div id="salle-game" style="display: none;">
+        <div id="salle-attente-game">
+            <div class="menu-lancer">
+                <div class="exit-the-game">
+                    <img src="images/icons/exit.png" alt=""> Quittez
+                </div>
+                <div class="pop-up-number-player">
+                    <h5>Nombre de joueur connecté.. </h5>
+                    <p id="numsPlayers"> 0</p>
+                </div>
+                <button id="start" onclick="launch_game()">Lancer</button>
+            </div>
+            <input type="text" id="lien-a-copier" readonly>
+            <button onclick="copierLien()">Copier le lien</button>
+        </div>
+        <div id="messagerie" style="display: none;">
+            <div id="messages"></div>
+            <div class="input-area">
+                <input type="text" id="messageInput" placeholder="Ecrire votre message...">
+                <button id="send-button" n onclick="sendMessage()">
+                    <img src="images/icons/send.png" alt="send">
+                </button>
+            </div>
+        </div>
+        <div id="salle-de-jeu-active">
+           
+        </div>
+        <div id="menu-carte">
+            <div id="my-carte" onclick="afficheCarteMenu()"></div>
+            <div id="liste-carte"></div>
+        </div>
+       <!-- votes du villages pop-up -->
+        <div class="wrapper-vote-village">
+            <div class="div-vote">
+                <span class="titre">Vote du jour</span><br>
+                <span> Votez pour eliminer un joueur!</span><br>
+                <span class="timer"></span>
+                <ul class="liste-vote-du-village">
+                </ul>
+            </div>
+        </div>
+        <!-- lire la carte du joueur -->
+        <template id="template-carte">
+            <div class="flip-card" onclick="this.classList.toggle('flipped')">
+                <div class="flip-card-inner">
+                    <div class="flip-card-front">
+                        <p class="bas">Cliquez pour lire le rôle!</p>
+                    </div>
+                    <div class="flip-card-back">
+                        <h2 class="card-name"></h2>
+                        <p class="card-description"></p>
+                    </div>
+                </div>
+            </div>
+        </template>
+        <div class="icon" id="see-msg" onclick="messagerie_visible()">
+            <img src="images/icons/chat.png" alt="">
+        </div>
+    </div>
+
+    <div id="transition-overlay" class="hidden-overlay">
+        <div id="transition-message">Le village s'endort...</div>
+    </div>
+    <!-- vote du village-->
+    <template id="template-vote-du-village">
+        <li class="player-item">
+            <div></div>
+            <span class="name"></span>
+            <span class="votes"></span>
+        </li>
+    </template>
+    <!-- popup de la sorciere   -->
+    <div id="popup-sorciere" class="pop-up hidden-overlay">
+    <div class="sorciere-card">
+        <div class="content">
+            <p id="message-victime"></p>
+        </div>
+        <div class="actions">
+            <button id="btn-sauver" class="btn-potion" onclick="clickPotionSauver()"><img src="images/icons/fiolesoso.png" alt="fiole sorciere"></button>
+            <button id="btn-tuer" class="btn-potion" onclick="clickPotionTuer()"><img src="images/icons/fiolesoso.png" alt="fiole sorciere"></button>
+            <br>
+            <button id="btn-rien" class="btn-passer">Ne rien faire</button>
+        </div>
+    </div>
+    </div>
+    <!--    fin     -->
+    <!--    popup timer  -->
+    <div id="popup-timer" class="hidden-overlay">
+        <div class="content-timer">
+            <div></div>
+            <div>
+                <p id="message-timer"></p>
+            </div>
+        </div>
+    </div>
+    <!--    fin     -->
+            <!--    popup mort  -->
+    <div id="popup-mort" class="pop-up hidden-overlay">
+        <div>
+            <p id="message-mort"></p>
+        </div>
+    </div>
+    <!--    fin     -->
+    <!-- special message-->
+     <template id="template-special-message">
+        <div id="wrapper-special-message">
+            <div class="circle">
+            <span>!</span>
+            </div>
+            <div class="pop-up-message">
+                <p id="special-message"></p>
+            </div>
+        </div>
+     </template>
+</body>
+</html>
+<script src="timer.js"></script>
+<script src="js.js"></script>
+<script src="client.js"></script>
+</body>
+</html>

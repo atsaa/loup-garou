@@ -1,0 +1,719 @@
+html, body {
+    height: 100%; /* Indispensable : Donne une hauteur fixe (100% de la fenêtre visible) au body et au html */
+    margin: 0;   /* Supprime les marges par défaut pour éviter les barres de défilement */
+    padding: 0;
+    overflow: hidden;
+    font-family: "Montserrat", sans-serif;
+    overscroll-behavior-y: none;
+}
+body{
+    background-color: red;
+}
+input, button, select, textarea {
+    font-family: inherit; 
+}
+:root{
+    --color-msg:rgba(5, 7, 27, 0.945);
+}
+#Accueil{
+    background-image: url("images/Boite/Dos.png");
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-color: rgb(41, 41, 170);
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.container{
+    position: absolute;
+    bottom: 30vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    gap: 20px;
+}
+#nameInput{
+    padding: 8px;
+    border:3px solid wheat;
+    height: auto;
+    font-size: 1.2rem;
+    font-family:"Creepster", cursive;  
+    text-align: center;
+    border-radius: 20px;
+    background-color: black;
+    color: white;
+}
+.btn1{background-color: #5e53d5;} .btn2{background-color: #28949c;}
+.btn1,.btn2{
+    text-align: center;
+    height: 50px;
+    width: 200px;
+    color: white;
+    font-size: 18px;
+    border-radius: 20px;
+    font-family: "MedievalSharp", serif;
+    border: 0;
+}
+.btn1:active,.btn2:active{
+background-color: red;
+}
+
+/*  Deuxieme page normalement*/
+#salle-game{
+    position: relative;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    background-color: #2c3e50;
+    padding: 20px;
+    padding-top: 0px;
+    padding-right: 0px;
+    z-index: 1;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+#salle-game::before{
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("images/background/day-cartoon.jpg");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0;
+    transition: opacity 1.5s ease;
+    z-index:-1;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+
+}
+#salle-game::after{
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("images/background/night.jpg");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0;
+    transition: opacity 1.5s ease;
+    z-index: -1;
+}
+.day{
+    box-shadow: inset 0 0 100px rgba(255, 255, 255, 0.1);
+}
+.night{
+}
+
+#salle-game.day::before{opacity: 1 !important;}
+#salle-game.night::after{opacity: 1 !important;}
+
+#salle-attente-game{
+}
+.menu-lancer{
+    height: 120px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+}
+.exit-the-game{
+    width: 100px;
+    display: flex;
+    align-items: center;
+    color: white;
+    font-weight: bold;
+}
+.exit-the-game >img{
+    height: 40px;
+    width: 40px;
+    filter: invert();
+    margin-right: 5px;
+}
+.pop-up-number-player{
+    background-color: white;
+    border-radius: 2px;
+    padding: 5px;
+    display: flex;
+    justify-content: center;
+    width: 400px;
+}
+.pop-up-number-player>p{
+    color: green;
+    font-weight: 400;
+}
+.pop-up-number-player>p, h5{
+    margin: 2px;
+}
+#start{
+    background-color: rgb(242, 242, 7);
+    border: none;
+    height: 70px;
+    width: 200px;
+    font-size: 16px;
+    font-family: "Creepster", cursive;
+    box-shadow: 1px 4px 1px rgb(221, 21, 21);
+    border-radius: 100px;
+}
+
+#messagerie{
+    height: 80%;
+    width: 50%;
+    z-index: 1;
+    position: relative;
+}
+#messages{
+    padding: 20px 12px;
+    border-radius: 27px;
+    width: 100%;
+    height: 90%;
+    background-color: var(--color-msg);
+    overflow-y: auto;
+    box-sizing: border-box;
+}
+.input-area {
+    display: flex;
+    padding: 10px;
+}
+#messageInput {
+    flex-grow: 1;
+    padding: 14px;
+    border: 1px solid #ddd;
+    margin-right: 10px;
+    background-color: var(--color-msg);
+    border-radius: 25px;
+    color: white;
+    font-size: 16px;
+    border: none;
+}
+#send-button{
+    background-color: black;
+    height: 50px;
+    width: 50px;
+    border-radius: 50%;
+    border: none;
+}
+#send-button>img{
+    height: 30px;
+    width: 30px;
+    filter: invert();
+}
+#messageInput::placeholder{
+    font-style: italic;
+    color: white;
+    opacity: 0.8;
+}
+#see-msg{
+    position: fixed;
+    bottom: 30px;
+    filter: drop-shadow(0px 5px 2px rgb(145, 141, 141));
+}
+
+img{
+    height: 100%;
+    width: 100%;
+    object-fit: cover;
+}
+
+.sent {
+    color: blue;
+    margin-top: 0px;
+    font-size: 16px;
+    color: white; 
+}
+.received {
+    color: green;
+    margin-top: 2px;
+    color: white;
+}
+.usertalk{
+    font-size: 11px;
+    margin: 0px;
+    padding: 0px;
+    font-size: 13px;
+    font-stretch: 100%;
+    font-weight: 400;
+    color: white;
+    opacity: 0.7;
+}
+.icon{
+    height: 50px;
+    width: 50px;
+}
+
+/*  css duran la salle-de-jeu-active  */
+.carte{
+    height: 25em;
+    width: 25em;
+    background-color: red;
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    text-align: center;
+    background-size: contain;
+    left: 50%;
+    top: 10%;
+    transform: translate(-50%, 0%);
+}
+/*  alterner jour et nuit*/
+
+
+
+
+/**/
+
+/* 1. Le conteneur extérieur (définit la perspective 3D) */
+.flip-card {
+    background-color: transparent;
+    height: 15em;/*25em;*/
+    width: 15em;/*25em;*/
+    perspective: 1000px; /* Donne l'effet de profondeur 3D */
+    cursor: pointer;
+    position: absolute;
+    left: 50%;
+    top: 10%;
+    transform: translate(-50%, 0%);
+    animation: bouge linear 1s alternate-reverse infinite;
+}
+
+/* 2. Le conteneur intérieur (l'élément qui tourne) */
+.flip-card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    transition: transform 0.6s; /* LA TRANSITION d'animation */
+    transform-style: preserve-3d; /* Nécessaire pour que les faces 3D fonctionnent */
+}
+
+/* 3. L'état "tourné" : lorsque la classe 'flipped' est ajoutée au conteneur */
+.flip-card.flipped .flip-card-inner {
+    transform: rotateY(180deg);
+}
+
+/* 4. Les faces avant et arrière */
+.flip-card-front, .flip-card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    /* Empêche la face arrière d'être visible lorsque la carte est en position initiale */
+    backface-visibility: hidden; 
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    box-sizing: border-box;
+}
+.bas{
+    position: absolute;
+    bottom: 0;
+}
+.flip-card-front {
+    background-color: #28949c;
+    background-size: cover;
+    object-fit: cover;
+    color: white;
+    text-align: end;
+}
+
+.flip-card-back {
+    background-color: #2c3e50; /* Couleur thème Loup-Garou */
+    color: white;
+    transform: rotateY(180deg); /* Positionne la face arrière à l'envers par défaut */
+    text-align: left;
+}
+
+@keyframes bouge {
+ to{
+    top: 12%;
+ }
+}
+.role-loup{
+    background-image:url('images/Cartes/Loup\ Garou.png');
+}
+.role-villageois{
+    background-image:url('images/Cartes/Simple\ Villageois.png');
+}
+.role-voyante{
+    background-image:url('images/Cartes/Voyante.png');
+}
+.role-cupidon{
+    background-image:url('images/Cartes/Cupidon.png');
+}
+.role-sorciere{
+    background-image:url('images/Cartes/Sorcière.png');
+}
+
+.liste-vote-du-village{
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+.li-chef{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #1e1e1e;
+    color: #fff;
+    padding: 14px 16px;
+    border-radius: 12px;
+    margin-bottom: 5px;
+    border: 1px solid rgba(132, 132, 132, 0.679);
+    transition: background 0.2s ease, transform 0.1s ease;
+    /*desactiver la selection de texte*/
+    user-select: none;
+}
+.li-chef:active{
+    transform: scale(0.98);
+}
+.li-chef.selected{
+    background: #7b1afa;
+}
+.li-chef .name{
+    font-weight: 600;
+}
+.li-chef .votes{
+    background: rgba(255, 255, 255, 0.15);
+    padding: 4px 10px;
+    border-radius: 50%;
+}
+.wrapper-vote-village{
+    display: none;
+    width: 100%;
+    justify-content: center;
+    padding-top: 7px;
+}
+.div-vote-chef{
+    background: linear-gradient(180deg, #49494b,#1f1f23);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.08),
+                inset 0 -1px 0 rgba(0,0,0,0.6),
+                0 10px 30px rgba(0,0,0,0.4);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    margin: 0 auto;
+    max-width: 420px;
+    padding: 20px;
+    border-radius: 14px;
+    position: absolute;
+    top: 0;
+    outline: 4px solid rgb(136, 136, 141);
+}
+.div-vote-chef>span{
+    color: white;
+    text-align: center;
+    margin: 8px;
+}
+.titre{
+    margin-bottom: 8px;
+    padding: 0px;
+    font-size: 21px;
+    font-stretch: 10%;
+    font-weight: 600;
+}
+.li-vote-village{
+    border: #28949c 2px solid;
+    background-color: rgb(242, 236, 236);
+    padding: 8px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: background 0.1s ease, transform 0.1s ease;
+}
+
+.li-vote-village .votes{
+    background: rgba(255, 255, 255, 0.75);
+    padding: 4px 8px;
+    border-radius: 50%;
+    color: rgb(134, 23, 23);
+    font-weight: 600;
+}
+.ul-vote-village{
+    margin: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+}
+.selected{
+    background-color: yellow;
+}
+.waiting {
+    opacity: 0.5;
+    pointer-events: none; /* Empêche de recliquer pendant l'envoi */
+    cursor: wait;
+}
+
+/*  css du menus carte */
+#menu-carte{
+    display: none;
+    padding-top: 10px;
+    width:100%;
+    justify-content:end;
+    gap: 8px;
+    /*background-color: #28949c;*/
+}
+#my-carte{
+    height: 40px;
+    width: 40px;
+    background-color: red;
+    pointer-events: all;
+}
+#liste-carte{
+    height: 40px;
+    width: 40px;
+    background-color: blue;
+    z-index: 999;
+    pointer-events: auto;
+}
+.maire{
+    height: 10px;
+    width: 10px;
+    background-color: red;
+    border-radius: 50%;
+}
+
+
+/*l'OVERLAY Ma div de transition entre chaque phase*/
+#transition-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.9); /* Noir presque opaque */
+    color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999; /* Toujours au-dessus */
+    transition: opacity 0.6s ease-in-out;
+    text-align: center;
+    pointer-events: all; /* Bloque les clics sur le reste du jeu */
+}
+
+/* La classe pour le masquer */
+.hidden-overlay {
+    display: none;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+#transition-message {
+    font-size: 2rem;
+    font-weight: bold;
+    padding: 20px;
+    text-shadow: 0 0 10px red; /* Effet un peu effrayant */
+}
+
+#transition-message {
+    animation: pulse 2s infinite ease-in-out;
+}
+
+/*popup de la sorciere*/
+
+.pop-up{
+    position:fixed;
+    top: 10px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    z-index: 999;
+    /*pointer-events: none;*/
+}
+
+.sorciere-card {
+    background: #02021a; /* Fond bleu nuit */
+    padding: 10px;
+    border-radius: 15px;
+    box-shadow: 0 0 25px rgba(0,0,0,0.8);
+    max-width: 300px;
+    color: white;
+}
+.actions{
+    text-align: center;
+}
+#btn-sauver{
+    filter: invert();
+}
+.btn-potion {
+    background: #1b5896;
+    color: white;
+    height: 40px;
+    width: 40px;
+    padding: 8px;
+    cursor: pointer;
+    transition: transform 0.2s;
+    border-radius: 50%;
+    border: none;
+    margin-left: 15px;
+    margin-right: 15px;
+    margin-bottom: 8px;
+    transition: background 0.1s ease, transform 0.1s ease;
+}
+.btn-potion:active{
+    transform: scale(0.98);
+}
+.btn-potion >img{
+    height: 100%;
+    width: 100%;
+    object-fit: contain;
+}
+.btn-potion:hover { transform: scale(1.05); background: #9a6a3f; }
+
+/* Griser si la potion est déjà utilisée */
+.btn-potion:disabled { opacity: 0.3; cursor: not-allowed; }
+
+/*      popup       timer*/
+#popup-timer{
+    position:fixed;
+    top: 10px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    z-index: 1;
+    pointer-events: none;
+}
+.content-timer{
+    min-width: 150px;
+    height: 50px;
+    background-color: rgba(43, 31, 99, 0.995);
+    color: white;
+    border-radius: 30px;
+}
+
+/*      messages speciaux*/
+#wrapper-special-message{
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: white;
+    margin-bottom: 10px;
+}
+.bleu{
+    background-color: rgb(0, 183, 255);
+}
+.rouge{
+    background-color: red;
+}
+
+.pop-up-message{
+    flex-grow: 1;
+    min-height: 70px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 20px;
+}
+.circle{
+    height: 30px;
+    width: 30px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 20px;
+    transform: rotate(180deg);
+}
+
+
+
+
+/**/
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 0.8; }
+    50% { transform: scale(1.05); opacity: 1; }
+    100% { transform: scale(1); opacity: 0.8; }
+}
+/**/
+
+
+@media screen and (max-width:1100px){
+    #salle-game{
+        box-sizing: border-box;
+        padding-right: 20px;
+    }
+    #messagerie{
+        height: 80%;
+        width: 90%;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+    .menu-lancer{
+        height: 120px;
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap-reverse;
+        justify-content:left;
+        align-items: flex-start;
+    }
+    .pop-up-number-player{
+        width: 100%;
+    }
+    #start{
+        position: absolute;
+        bottom: 150px;
+        height: 50px;
+        z-index: 0;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+    .div-vote-chef{
+        position: relative;
+        top: auto;
+        left: auto;
+        right: auto;
+        bottom: auto;
+        inset: auto;
+    }
+}
+
+@media screen and (max-height:900px){
+
+.icon{
+    height: 30px;
+    width: 30px;
+}
+#send-button{
+    height: 30px;
+    width: 30px;
+}
+#send-button>img{
+    height: 10px;
+    width: 10px;
+}
+#messageInput{
+    font-size: 12px;
+    padding: 7px
+}
+#message{
+    font-size: 14px;
+}
+p{
+    font-size: 14px;
+}
+.exit-the-game >img{
+    height: 20px;
+    width: 20px;
+}
+
+}
