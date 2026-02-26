@@ -616,7 +616,7 @@ wss.on('connection', function connection(ws) {
         if (ws.gameId) {
             sallesDeJeu[ws.gameId].joueurs.forEach(function each(client){
             if (client.readyState === WebSocket.OPEN) {
-              client.send(message);
+              client.send(JSON.stringify(data));
             }
           })
         }
