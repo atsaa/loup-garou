@@ -38,6 +38,7 @@ function salle_enter(str){
 
 socket.addEventListener('message', function (event) {
     try {
+        console.log("jsuis dans le try ",messageData);
         const messageData = JSON.parse(event.data);
         if (messageData.type === 'CLIENT_COUNT') {
             console.log(messageData);
@@ -108,6 +109,7 @@ socket.addEventListener('message', function (event) {
         }
     } catch (error) {
         console.log(error);
+        console.log("jsuis dans le catch ",messageData);
     }
 });
 
