@@ -44,8 +44,8 @@ function salle_enter(str){
 
 socket.addEventListener('message', function (event) {
     try {
-        console.log("jsuis dans le try ",messageData);
         const messageData = JSON.parse(event.data);
+        console.log("jsuis dans le try ",messageData);
         if (messageData.type === 'CLIENT_COUNT') {
             console.log(messageData);
             numsplayers.innerHTML=messageData.count;
