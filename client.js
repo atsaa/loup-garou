@@ -115,7 +115,7 @@ socket.addEventListener('message', function (event) {
         }
     } catch (error) {
         console.log(error);
-        console.log("jsuis dans le catch ",messageData);
+        console.log("jsuis dans le catch ", event.data);
     }
 });
 
