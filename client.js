@@ -4,8 +4,14 @@ const messageInput = document.getElementById('messageInput');
 var Nombre_de_joeur;
 //const socket = new WebSocket('ws://localhost:8080');
 //const socket = new WebSocket('ws:192.168.197.132:8080');
+const isLocal = window.location.hostname === "localhost" || window.location.hostname === "ws:192.168.197.132:8080";
 
-const socket = new WebSocket(window.location.origin.replace(/^http/, 'ws'));
+// On choisit l'URL WebSocket en conséquence
+const socketUrl = isLocal 
+    ? "ws://localhost:8080" 
+    : window.location.origin.replace(/^http/, 'ws');
+
+const socket = new WebSocket(socketUrl);
 let phasePeriod;
 let phaseActuelle = "SEEYOURCARD";
 let estEnPartie = false;
