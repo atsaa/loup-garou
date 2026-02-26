@@ -16,8 +16,6 @@ const datas = require('./data.js');
 
 //definir le port dynamique de render
 const PORT = process.env.port || 8080;
-const app = express();
-
 // 1. Créer le serveur qui envoie ton HTML/JS aux joueurs
 const server = http.createServer((req, res) => {
     // Si tu as un dossier "public", ajuste le chemin ici
