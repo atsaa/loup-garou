@@ -5,7 +5,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
-import { datas } from './data.js';
+//import { datas } from './data.js';
 // server.js (Backend Node.js)
 //const { consoleOrigin } = require('firebase-tools/lib/api');
 const WebSocket = require('ws');
@@ -17,47 +17,38 @@ const datas = require('./data.js');
 //definir le port dynamique de render
 const PORT = process.env.port || 8080;
 
-//verifier si l'on est en locale ou en ligne
-if (process.env.port){  
 // 1. Créer le serveur qui envoie ton HTML/JS aux joueurs
-  const server = http.createServer((req, res) => {
-      // Si tu as un dossier "public", ajuste le chemin ici
-      let filePath = '.' + req.url;
-      if (filePath === './') filePath = './index.html';
-      
-      const extname = path.extname(filePath);
-      // Dictionnaire des types MIME
-      let contentType = 'text/html';
-      switch (extname) {
-          case '.js': contentType = 'text/javascript'; break;
-          case '.css': contentType = 'text/css'; break;
-          case '.json': contentType = 'application/json'; break;
-          case '.png': contentType = 'image/png'; break;
-          case '.jpg': contentType = 'image/jpg'; break;
-      }
-      fs.readFile(filePath, (error, content) => {
-          if (error) {
-              res.writeHead(404);
-              res.end("Fichier non trouvé");
-          } else {
-              // ✅ On utilise la variable contentType ici !
-              res.writeHead(200, { 'Content-Type': contentType });
-              res.end(content, 'utf-8');
-          }
-      });
-  });
-  const wss = new WebSocket.Server({ server });
+const server = http.createServer((req, res) => {
+    // Si tu as un dossier "public", ajuste le chemin ici
+    let filePath = '.' + req.url;
+    if (filePath === './') filePath = './index.html';
+    
+    const extname = path.extname(filePath);
+    // Dictionnaire des types MIME
+    let contentType = 'text/html';
+    switch (extname) {
+        case '.js': contentType = 'text/javascript'; break;
+        case '.css': contentType = 'text/css'; break;
+        case '.json': contentType = 'application/json'; break;
+        case '.png': contentType = 'image/png'; break;
+        case '.jpg': contentType = 'image/jpg'; break;
+    }
+    fs.readFile(filePath, (error, content) => {
+        if (error) {
+            res.writeHead(404);
+            res.end("Fichier non trouvé");
+        } else {
+            // ✅ On utilise la variable contentType ici !
+            res.writeHead(200, { 'Content-Type': contentType });
+            res.end(content, 'utf-8');
+        }
+    });
+});
+const wss = new WebSocket.Server({ server });
 
-
-  server.listen(PORT, () => {
-      console.log(`Le village est en ligne sur le port ${PORT}`);
-  });
-}
-else{
-  const wss = new WebSocket.Server({ port: 8080 });
-}
-
-
+server.listen(PORT, () => {
+    console.log(`Le village est en ligne sur le port ${PORT}`);
+});
 
 const sallesDeJeu = {};
 
