@@ -4,12 +4,14 @@ const messageInput = document.getElementById('messageInput');
 var Nombre_de_joeur;
 //const socket = new WebSocket('ws://localhost:8080');
 //const socket = new WebSocket('ws:192.168.197.132:8080');
+const isIp = "192.168.195.132";
+const ip ="ws:192.168.195.132:8080";
 const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
-|| window.location.hostname === "ws:192.168.197.132:8080";
+|| window.location.hostname === isIp;
 
 // On choisit l'URL WebSocket en conséquence
 const socketUrl = isLocal 
-    ? "ws:192.168.197.132:8080" 
+    ? ip
     : window.location.origin.replace(/^http/, 'ws');
 console.log(isLocal, socketUrl);
 const socket = new WebSocket(socketUrl);
@@ -46,7 +48,6 @@ function salle_enter(str){
 socket.addEventListener('message', function (event) {
     try {
         const messageData = JSON.parse(event.data);
-        console.log("jsuis dans le try ",messageData);
         if (messageData.type === 'CLIENT_COUNT') {
             console.log(messageData);
             numsplayers.innerHTML=messageData.count;
@@ -61,6 +62,7 @@ socket.addEventListener('message', function (event) {
         }
         else if(messageData.type === 'GAME_OVER')
         {
+            gameOver(messageData);
             console.log("JEU Termine", messageData);
         }
         else if(messageData.type === 'MESSAGE'){
@@ -70,6 +72,9 @@ socket.addEventListener('message', function (event) {
             console.log(messageData.message);
         }
         else if(messageData.type === 'MY_VOTE_ELIMINATION'){
+            receive_vote(messageData);
+        }
+        else if(messageData.type === 'MY_VOTE_MAIRE'){
             receive_vote(messageData);
         }
         else if (messageData.type === 'SEEYOURCARD' && estEnPartie){
@@ -218,6 +223,14 @@ function specialMessage(message, messageDeMort){
 function sendYourVote(my_vote, name){
     const data = {
         type:'MY_VOTE_ELIMINATION',
+        myVote:my_vote,
+        nameVotant:name,
+    }
+    socket.send(JSON.stringify(data));
+}
+function sendYourMaireVote(my_vote, name){
+    const data = {
+        type:'MY_VOTE_MAIRE',
         myVote:my_vote,
         nameVotant:name,
     }

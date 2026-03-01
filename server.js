@@ -10,6 +10,7 @@ const path = require('path');
 //const { consoleOrigin } = require('firebase-tools/lib/api');
 const WebSocket = require('ws');
 const datas = require('./data.js');
+const { cli } = require('firebase-tools');
 //const { cli } = require('firebase-tools');
 //const client = require('firebase-tools');
 // Crée un serveur WebSocket sur le port 8080
@@ -115,7 +116,6 @@ function assignRole(roomId, name, data){
   }*/
 }
 function sorciereSauve(roomId, name){
-  console.log('i am there');
   const salle = sallesDeJeu[roomId];
   if (!salle.joueurs_role[name].potionVie) {
     return ;
@@ -276,17 +276,6 @@ function joueurElimine(roomId, phase){
     }
     salle.joueurs_mort.push(winners[0]);
   }
-  /*if (phase === "VOTE") {
-    if (winners.length === 1 ) {
-      salle.joueurs_mort = winners;
-    } 
-  }
-  else if (phase === "VOTE_LOUP") {
-      if (winners.length !== 1)
-        return ;
-      salle.wolfVictim = winners[0];
-      salle.joueurs_mort.push(winners[0]);
-  }*/
 }
 
 function finPhase(roomId, func, period, phase) {
@@ -343,18 +332,26 @@ function lancerTimer(roomId, timer, func, period, phase, role, attribut) {
 
 function sendMaire(roomId)
 {
-  const salles = sallesDeJeu[roomId];
-  salles.maire = "roro";
+  const salle = sallesDeJeu[roomId];
+  const count = countVote(roomId);
+  const maxVal = Math.max(...Object.values(count));
+  const winners = Object.keys(count).filter(k => count[k] === maxVal);
+  salle.voteActuel = {};
+  if (winners.length !== 1) {
+    salle.maire = winners[Math.floor(Math.random() * winners.length)]
+  }
+  else
+    salle.maire = winners[0];
   message = {
     type:"MESSAGE",
     name:"server",
-    message:"roro a été élu Maire",
+    message:`${salle.maire}`+" a été élu Maire",
   }
   maire = {
     type:"CHOIX_MAIRE",
-    value:"roro"
+    value:salle.maire
   }
-  salles.joueurs.forEach(function each(client){
+  salle.joueurs.forEach(function each(client){
     if (client.readyState === WebSocket.OPEN) {
       client.send(JSON.stringify(message));
       client.send(JSON.stringify(maire));
@@ -367,7 +364,7 @@ function etapeJour(roomId)
   const salle = sallesDeJeu[roomId];
   switch (salle.phase) {
     case 'VOTE_MAIRE':
-      lancerTimer(roomId, 1, etapeJour, "JOUR", "VOTE");
+      lancerTimer(roomId, 20, etapeJour, "JOUR", "VOTE");
       break;
     case 'VOTE':
       lancerTimer(roomId, 10, PeriodeDuJeu, "NUIT", "ATTENTE");
@@ -381,7 +378,7 @@ function etapeNuit(roomId)
 
     switch(salle.phase) {
         case "ATTENTE":
-            lancerTimer(roomId, 5, PeriodeDuJeu, "NUIT", "VOTE_LOUP"); // Lance le timer de 5s puis revient ici
+            lancerTimer(roomId, 2, PeriodeDuJeu, "NUIT", "VOTE_LOUP"); // Lance le timer de 5s puis revient ici
             break;
         case "CHARGEMENT":
             salle.phase = "VOTE";
@@ -561,7 +558,7 @@ wss.on('connection', function connection(ws) {
             })
         }
       }
-      else if (data.type === 'MY_VOTE_ELIMINATION') {
+      else if (data.type === 'MY_VOTE_ELIMINATION' || data.type === 'MY_VOTE_MAIRE') {
         if (ws.gameId) {
           data.nameVotant = ws.name;
           if (!sallesDeJeu[ws.gameId].joueurs_en_vie.includes(data.nameVotant)) {
@@ -597,16 +594,13 @@ wss.on('connection', function connection(ws) {
         if (ws.gameId) {
           const salle = sallesDeJeu[ws.gameId];
           if (salle.joueurs_role[ws.name].attribut !== ATTRIBUTS.SORCIERE) {
-            console.log(ws.name);
             console.log("attribut is", salle.joueurs_role[ws.name].ATTRIBUTS)
             return ;
           }
           if (data.choice === 'SAUVER') {
-            console.log('huzjvuz pop');
             sorciereSauve(ws.gameId, ws.name);
           }
           else if (data.choice === 'TUER') {
-            console.log('tuer');
             sorciereTuer(ws.gameId, ws.name);
           }
         }

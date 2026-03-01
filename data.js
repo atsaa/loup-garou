@@ -1,4 +1,4 @@
-const ASSET = "images/Cartes/";
+const ASSET = "images/Cartes";
 
 const ATTRIBUTS = {
     VILLAGEOIS:'aucun',
@@ -35,8 +35,8 @@ class carte {
 };
 
 const datas = [
-    new carte("loup", ASSET+"/Loup Garou.png", ROLE.LOUP, ATTRIBUTS.LOUP,""),
-    new carte("villageois", ASSET+"/Simple Villageois.png", ROLE.VILLAGEOIS, ATTRIBUTS.VILLAGEOIS,""),
+    new carte("loup", ASSET+"/LoupGarou.png", ROLE.LOUP, ATTRIBUTS.LOUP,""),
+    new carte("villageois", ASSET+"/SimpleVillageois.png", ROLE.VILLAGEOIS, ATTRIBUTS.VILLAGEOIS,""),
     new carte("petite fille", ASSET+"/PetiteFille.png", ROLE.VILLAGEOIS, ATTRIBUTS.PETITE_FILLE,""),
     new carte("sorciere", ASSET+"/Sorcière.png", ROLE.VILLAGEOIS, ATTRIBUTS.SORCIERE,""),
     new carte("cupidon", ASSET+"/Cupidon.png", ROLE.VILLAGEOIS, ATTRIBUTS.CUPIDON,""),

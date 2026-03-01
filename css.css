@@ -341,10 +341,10 @@ img{
  }
 }
 .role-loup{
-    background-image:url('images/Cartes/Loup\ Garou.png');
+    background-image:url('images/Cartes/LoupGarou.png');
 }
 .role-villageois{
-    background-image:url('images/Cartes/Simple\ Villageois.png');
+    background-image:url('images/Cartes/SimpleVillageois.png');
 }
 .role-voyante{
     background-image:url('images/Cartes/Voyante.png');
@@ -575,7 +575,6 @@ img{
     width: 100%;
     object-fit: contain;
 }
-.btn-potion:hover { transform: scale(1.05); background: #9a6a3f; }
 
 /* Griser si la potion est déjà utilisée */
 .btn-potion:disabled { opacity: 0.3; cursor: not-allowed; }

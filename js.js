@@ -114,6 +114,9 @@ function showCarte(data){
     else if(donnee.name == 'villageois'){
         flip_carte.classList.add('role-villageois')
     }
+    else if(donnee.name == 'cupidon') {
+        flip_carte.classList.add('role-cupidon')
+    }
     else if(donnee.name == 'sorciere') {
         flip_carte.classList.add('role-sorciere')
     }
@@ -132,33 +135,24 @@ function hideCarte(){
 
 liste_joueurs = []; 
 function show_vote_chef(){
-    //const donnee = data.data;
     const wrapper_vote_village = document.querySelector(".wrapper-vote-village");
     document.querySelector(".div-vote").classList.add("div-vote-chef");
     wrapper_vote_village.style.display = 'flex';
     const liste = document.querySelector('.liste-vote-du-village');
-    let selectedPlayerId = null;
-    for (let index = 0; index < 4; index++) {
+    for (let index = 0; index < joueurs_en_vie.length; index++) {
         const clone = document.getElementById('template-vote-du-village').content.cloneNode(true);   
         const li = clone.firstElementChild;
         li.classList.add("li-chef");
-        liste_joueurs[index] = li;
-        liste_joueurs[index].querySelector(".name").textContent = "name"+index;
+        li.dataset.id = joueurs_en_vie[index];
+        liste_joueurs[index] = li;        
+        liste_joueurs[index].querySelector(".name").textContent = joueurs_en_vie[index];
         liste_joueurs[index].querySelector(".votes").textContent = "0";
         li.addEventListener("click",()=>{
-            if (selectedPlayerId === li) {
-                li.classList.remove("selected");
-                li.querySelector(".votes").textContent = "0";
-                selectedPlayerId = null;
-                return;
-            }
-            if (selectedPlayerId) {
-                selectedPlayerId.classList.remove("selected");
-                selectedPlayerId.querySelector(".votes").textContent = "0";
-            }
-            li.classList.add("selected");
-            li.querySelector(".votes").textContent = "1";
-            selectedPlayerId = li;
+            document.querySelector('.liste-vote-du-village').classList.add('waiting');
+            setTimeout(() => {
+                document.querySelector('.liste-vote-du-village').classList.remove('waiting');
+            }, 400);
+            sendYourMaireVote(li.dataset.id, localStorage.getItem('NameLoupGarou'));
         });
         liste.appendChild(li);
     }
@@ -223,7 +217,6 @@ function show_vote(){
     wrapper_vote_village.style.display = 'flex';
     document.querySelector(".liste-vote-du-village").classList.add("ul-vote-village");
     const liste = document.querySelector('.liste-vote-du-village');
-    selectedPlayerId = null;
     for (let index = 0; index < joueurs_en_vie.length; index++) {
         const clone = document.getElementById('template-vote-du-village').content.cloneNode(true);   
         const li = clone.firstElementChild;
@@ -236,9 +229,6 @@ function show_vote(){
         liste_joueurs[index] = li;
         liste_joueurs[index].querySelector(".name").textContent = joueurs_en_vie[index];
         li.addEventListener("click",()=>{
-            //console.log(selectedPlayerId);
-           // selectedPlayerId = vote_elimante_villageois(selectedPlayerId, li);
-            //console.log(selectedPlayerId);
             document.querySelector('.liste-vote-du-village').classList.add('waiting');
             setTimeout(() => {
                 document.querySelector('.liste-vote-du-village').classList.remove('waiting');
@@ -414,4 +404,10 @@ function clickPotionTuer(){
         choice:'TUER'
     }
     socket.send(JSON.stringify(data));
+}
+function gameOver(data){
+    const over = document.getElementById("game-over");
+    over.classList.remove("hidden-overlay");
+    const message = over.querySelector(".over");
+    message.innerHTML = `<strong>La partie a été remporté par les ${data.winner}</strong>`;
 }
