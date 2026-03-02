@@ -10,7 +10,6 @@ const path = require('path');
 //const { consoleOrigin } = require('firebase-tools/lib/api');
 const WebSocket = require('ws');
 const datas = require('./data.js');
-const { cli } = require('firebase-tools');
 //const { cli } = require('firebase-tools');
 //const client = require('firebase-tools');
 // Crée un serveur WebSocket sur le port 8080
