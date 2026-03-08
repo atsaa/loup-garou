@@ -212,6 +212,7 @@ function verifierFinDePartie(roomId){
     let nbVillageois = 0;
 
     salle.joueurs_en_vie.forEach(pseudo => {
+        console.log(pseudo);
         if (salle.participants[pseudo].role === ROLE.LOUP) {
             nbLoups++;
         } else {
