@@ -14,26 +14,114 @@ const socketUrl = isLocal
     ? ip
     : window.location.origin.replace(/^http/, 'ws');
 console.log(isLocal, socketUrl);
-const socket = new WebSocket(socketUrl);
+let socket = new WebSocket(socketUrl);
 let phasePeriod;
 let phaseActuelle = "SEEYOURCARD";
 let estEnPartie = false;
 let maire = undefined;
+let reconnectInterval = undefined;
+let refresh = true;
 
-function iniatilisation()
-{
-    phasePeriod = undefined;
-    phaseActuelle ="SEEYOURCARD";
-    Nombre_de_joeur = 0;
+function connecter() {
+    socket = new WebSocket(socketUrl);
+    socket.addEventListener('open', function (event) {
+        console.log("Connecté !");
+        if (reconnectInterval)
+            clearInterval(reconnectInterval); // On arrête de tenter la reconnexion
+        reconnectInterval = undefined;
+        gererRouteURL();
+        if (refresh) {
+            console.log(event.data);
+            if (localStorage.getItem('NameLoupGarou'))
+                logMessage('Connecté au serveur.', 'received', localStorage.getItem('NameLoupGarou'));
+            else
+                logMessage('Connecté au serveur', 'received', 'none');
+            refresh = false;
+        }
+    });
+
+    socket.addEventListener('message', function (event) {
+        try {
+            const messageData = JSON.parse(event.data);
+            console.log(messageData);
+            if (messageData.type === "ROOMID_DOESNT_EXIST") {
+                localStorage.removeItem("roomId");
+            }
+            else if (messageData.type === 'CLIENT_COUNT') {
+                console.log(messageData);
+                numsplayers.innerHTML=messageData.count;
+                changeSalle();
+            }
+            else if(messageData.type === 'SALLE_CREEE'){
+                changeSalleHote(messageData.gameId);
+            }
+            else if(messageData.type === 'GAME_LAUNCH'){
+                recept_launch_game(messageData);
+                localStorage.setItem("roomId", messageData.roomId);
+                estEnPartie = true;
+            }
+            else if(messageData.type === 'GAME_OVER')
+            {
+                gameOver(messageData);
+                console.log("JEU Termine", messageData);
+            }
+            else if(messageData.type === 'MESSAGE'){
+                logMessage(messageData.message, 'received', messageData.name);
+            }
+            else if (messageData.type === 'ERREUR') {
+                console.log(messageData.message);
+            }
+            else if(messageData.type === 'MY_VOTE_ELIMINATION'){
+                receive_vote(messageData);
+            }
+            else if(messageData.type === 'MY_VOTE_MAIRE'){
+                receive_vote(messageData);
+            }
+            else if (messageData.type === 'SEEYOURCARD' && estEnPartie){
+                phaseActuelle = "SEEYOURCARD";
+                console.log(messageData.type, messageData.phase, phaseActuelle);
+            }
+            else if (messageData.type === "CHOIX_MAIRE") {
+                maire = messageData.value;
+            }
+            else if (messageData.type === "TRANSITION" && estEnPartie) {
+                if (messageData.phase !== phaseActuelle)
+                    gererAffichagePhase(messageData.phase, messageData);
+            }
+            else if (messageData.type === 'JOUR' && estEnPartie){
+            PeriodeJour(messageData);
+            }
+            else if (messageData.type === 'NUIT' && estEnPartie){
+                PeriodeNuit(messageData);
+            }
+            else if (messageData.type === 'REPRISE') {
+                console.log("reprise", messageData.phase, phaseActuelle);
+                estEnPartie = true;
+                recept_reprise_game(messageData);
+            }
+            else{ 
+            }
+        } catch (error) {
+            console.log(error);
+            console.log("jsuis dans le catch ", event.data);
+        }
+    });
+    socket.onclose = () => {
+        console.warn("Connexion perdue. Tentative de reconnexion...");  
+        // On évite de lancer plusieurs intervalles en même temps
+        if (!reconnectInterval) {
+            reconnectInterval = setInterval(() => {
+                console.log("Tentative de reconnexion en cours...");
+                connecter(); // On relance la fonction de base
+            }, 3000); 
+        }
+    };
+    // 4. Événement d'erreur
+    socket.addEventListener('error', function (event) {
+        localStorage.removeItem("roomId");
+        console.log('Erreur de connexion WebSocket.');
+    });
 }
-// 2. Événement de connexion réussie
-socket.addEventListener('open', function (event) {
-    console.log(event.data);
-    if (localStorage.getItem('NameLoupGarou'))
-        logMessage('Connecté au serveur.', 'received', localStorage.getItem('NameLoupGarou'));
-    else
-        logMessage('Connecté au serveur', 'received', 'none');
-});
 
 function salle_enter(str){
 
@@ -45,71 +133,12 @@ function salle_enter(str){
         lancer.style.display = 'block';
 }
 
-socket.addEventListener('message', function (event) {
-    try {
-        const messageData = JSON.parse(event.data);
-        if (messageData.type === "ROOMID_DOESNT_EXIST") {
-            localStorage.removeItem("roomId");
-        }
-        else if (messageData.type === 'CLIENT_COUNT') {
-            console.log(messageData);
-            numsplayers.innerHTML=messageData.count;
-            changeSalle();
-        }
-        else if(messageData.type === 'SALLE_CREEE'){
-            changeSalleHote(messageData.gameId);
-        }
-        else if(messageData.type === 'GAME_LAUNCH'){
-            recept_launch_game(messageData);
-            localStorage.setItem("roomId", messageData.roomId);
-            estEnPartie = true;
-        }
-        else if(messageData.type === 'GAME_OVER')
-        {
-            gameOver(messageData);
-            console.log("JEU Termine", messageData);
-        }
-        else if(messageData.type === 'MESSAGE'){
-            logMessage(messageData.message, 'received', messageData.name);
-        }
-        else if (messageData.type === 'ERREUR') {
-            console.log(messageData.message);
-        }
-        else if(messageData.type === 'MY_VOTE_ELIMINATION'){
-            receive_vote(messageData);
-        }
-        else if(messageData.type === 'MY_VOTE_MAIRE'){
-            receive_vote(messageData);
-        }
-        else if (messageData.type === 'SEEYOURCARD' && estEnPartie){
-            phaseActuelle = "SEEYOURCARD";
-            console.log(messageData.type, messageData.phase, phaseActuelle);
-        }
-        else if (messageData.type === "CHOIX_MAIRE") {
-            maire = messageData.value;
-        }
-        else if (messageData.type === "TRANSITION" && estEnPartie) {
-            if (messageData.phase !== phaseActuelle)
-                gererAffichagePhase(messageData.phase, messageData);
-        }
-        else if (messageData.type === 'JOUR' && estEnPartie){
-           PeriodeJour(messageData);
-        }
-        else if (messageData.type === 'NUIT' && estEnPartie){
-            PeriodeNuit(messageData);
-        }
-        else if (messageData.type === 'REPRISE') {
-            console.log("reprise", messageData.phase, phaseActuelle);
-            estEnPartie = true;
-            recept_reprise_game(messageData);
-        }
-        else{ 
-        }
-    } catch (error) {
-        console.log(error);
-        console.log("jsuis dans le catch ", event.data);
-    }
-});
+function iniatilisation()
+{
+    phasePeriod = undefined;
+    phaseActuelle ="SEEYOURCARD";
+    Nombre_de_joeur = 0;
+}
 
 function PeriodeNuit(data){
     const messageData = data
@@ -144,13 +173,6 @@ function PeriodeJour(data){
     phasePeriod = 'JOUR';
 }
 
-
-// 4. Événement d'erreur
-socket.addEventListener('error', function (event) {
-    localStorage.removeItem("roomId");
-    console.log('Erreur de connexion WebSocket.');
-});
-
 // 5. Fonction pour envoyer un message
 function sendMessage() {  
     message = {
@@ -161,19 +183,18 @@ function sendMessage() {
     if (message.message.trim() !== '') {
         socket.send(JSON.stringify(message)); // Envoie le message au serveur
         messageInput.value = '';
+        messageInput.focus();
     }
 }
 function Reconnexion_salle(){
     pseudo = localStorage.getItem('NameLoupGarou');
     gameId = localStorage.getItem("roomId");
     console.log("Tentative de RECONNEXION...");
-    socket.addEventListener('open', function (event) {
-        socket.send(JSON.stringify({
-            type: "RECONNEXION",
-            name: pseudo,
-            gameId: gameId,
-        }));
-    });
+    socket.send(JSON.stringify({
+        type: "RECONNEXION",
+        name: pseudo,
+        gameId: gameId,
+    }));
 }
 
 function Rejoindre_salle(gameId){
@@ -182,9 +203,7 @@ function Rejoindre_salle(gameId){
         gameId:gameId,
         name:localStorage.getItem("NameLoupGarou"),
     }
-    socket.addEventListener('open', function (event) {
-        socket.send(JSON.stringify(data)); 
-    });
+    socket.send(JSON.stringify(data)); 
 }
 
 function launch(){

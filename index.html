@@ -33,13 +33,18 @@
             <input type="text" id="lien-a-copier" readonly>
             <button onclick="copierLien()">Copier le lien</button>
         </div>
-        <div id="messagerie" style="display: none;">
-            <div id="messages"></div>
-            <div class="input-area">
-                <input type="text" id="messageInput" placeholder="Ecrire votre message...">
-                <button id="send-button" n onclick="sendMessage()">
-                    <img src="images/icons/send.png" alt="send">
-                </button>
+        <div class="wrapper-messagerie">
+            <div id="messagerie" style="display: none;">
+                <div id="messages"></div>
+                <div class="input-area">
+                    <input type="text" id="messageInput" placeholder="Ecrire votre message...">
+                    <button id="send-button" n onclick="sendMessage()">
+                        <img src="images/icons/send.png" alt="send">
+                    </button>
+                </div>
+            </div>
+            <div class="icon" id="see-msg" onclick="messagerie_visible()">
+                <img src="images/icons/chat.png" alt="">
             </div>
         </div>
         <div id="salle-de-jeu-active">
@@ -73,9 +78,6 @@
                 </div>
             </div>
         </template>
-        <div class="icon" id="see-msg" onclick="messagerie_visible()">
-            <img src="images/icons/chat.png" alt="">
-        </div>
     </div>
 
     <div id="transition-overlay" class="hidden-overlay">

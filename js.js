@@ -13,7 +13,7 @@ let joueurs_en_vie = [];
 let donnee_carte;
 
 document.addEventListener('DOMContentLoaded', () => {
-    gererRouteURL();
+    connecter();
 });
 function changeSalle(){
     ecranAccueil.style.display = 'none';
@@ -52,7 +52,7 @@ function messagerie_visible(){
     if (messagerie.style.display != 'none')
         messagerie.style.display = 'none';
     else if (messagerie.style.display == 'none')
-        messagerie.style.display = 'block';
+        messagerie.style.display = 'flex';
 }
 
 function creerNouvellePartie() {

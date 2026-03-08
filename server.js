@@ -635,11 +635,13 @@ wss.on('connection', function connection(ws) {
       }
       else if (data.type === "RECONNEXION") {
         if (!data.gameId || !sallesDeJeu[data.gameId]) {
+        console.log('no pourquoi');
           ws.send(JSON.stringify({
               type: "ROOMID_DOESNT_EXIST",
           })); 
           return;
         }
+        console.log('jai traverse');
         ws.name = data.name;
         ws.gameId = data.gameId;
         const joueur = sallesDeJeu[data.gameId].participants[data.name];
