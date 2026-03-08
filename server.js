@@ -757,8 +757,8 @@ function eliminerDefinitivement(p, roomId){
   const salle = sallesDeJeu[roomId];
   if (salle) {
     salle.joueurs.delete(p.ws);
-    delete salle.participants[p.name];
     delete salle.joueurs_en_vie[p.name];
+    delete salle.participants[p.name];
     delete salle.joueurs_mort[p.name];
   }    //broadcastClientCount();
 }
