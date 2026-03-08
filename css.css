@@ -543,7 +543,7 @@ img{
 
 .pop-up{
     position:fixed;
-    top: 10px;
+    top: 100px;
     width: 100%;
     display: flex;
     justify-content: center;
@@ -595,7 +595,7 @@ img{
 /*      popup       timer*/
 #popup-timer{
     position:fixed;
-    top: 10px;
+    top: 30px;
     width: 100%;
     display: flex;
     justify-content: center;
@@ -620,7 +620,7 @@ img{
     margin-bottom: 10px;
 }
 .bleu{
-    background-color: rgb(0, 183, 255);
+    background-color: rgb(10, 89, 236);
 }
 .rouge{
     background-color: red;
@@ -645,9 +645,20 @@ img{
     transform: rotate(180deg);
 }
 
-
-
-
+/*Annonce fin du game*/
+.pop-up-end-game{
+    flex-grow: 1;
+    min-height: 70px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 30px;
+    max-width: 350px;
+}
+.pop-up-end-game>span{
+    text-align: center;
+    color: white;
+}
 /**/
 @keyframes pulse {
     0% { transform: scale(1); opacity: 0.8; }

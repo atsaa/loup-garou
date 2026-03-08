@@ -370,10 +370,10 @@ function etapeJour(roomId)
   salle.typeNow = 'JOUR';
   switch (salle.phase) {
     case 'VOTE_MAIRE':
-      lancerTimer(roomId, 2, etapeJour, "JOUR", "VOTE");
+      lancerTimer(roomId, 20, etapeJour, "JOUR", "VOTE");
       break;
     case 'VOTE':
-      lancerTimer(roomId, 4, PeriodeDuJeu, "NUIT", "ATTENTE");
+      lancerTimer(roomId, 20, PeriodeDuJeu, "NUIT", "ATTENTE");
       break;
   }
 }
@@ -388,7 +388,7 @@ function etapeNuit(roomId)
             break;
         case "CHARGEMENT":
             salle.phase = "VOTE";
-            lancerTimer(roomId, 1, PeriodeDuJeu); // Lance le timer de 30s puis revient ici
+            lancerTimer(roomId, 20, PeriodeDuJeu); // Lance le timer de 30s puis revient ici
             break;
         case "VOTE_LOUP":
             lancerTimer(roomId, 10, PeriodeDuJeu, "JOUR", "VOTE", ROLE.LOUP, ATTRIBUTS.LOUP); // Enchaîne sur la nuit
@@ -405,7 +405,7 @@ function PeriodeDuJeu(roomId) {
     switch (salle.period) {
       case "SEEYOURCARD":
         salle.phase = "NULL";
-        lancerTimer(roomId, 2, PeriodeDuJeu, "JOUR", "VOTE_MAIRE");
+        lancerTimer(roomId, 10, PeriodeDuJeu, "JOUR", "VOTE_MAIRE");
         break ;
       case 'JOUR':
         etapeJour(roomId);
