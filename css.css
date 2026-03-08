@@ -7,7 +7,6 @@ html, body {
     overscroll-behavior-y: none;
 }
 body{
-    background-color: red;
 }
 input, button, select, textarea {
     font-family: inherit; 

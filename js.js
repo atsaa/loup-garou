@@ -6,12 +6,9 @@ var ecranJeu = document.getElementById('salle-game');
 let game_active=document.querySelector('#salle-de-jeu-active');
 let salle_attente = document.querySelector('#salle-attente-game');
 
-let periodActuelle = "NUIT"; // Le jeu commence souvent la nuit
 const DUREE_PHASE = 1200; // 2 minutes en millisecondes
-let day = true;
 let showRoleCarte = null;
 let showVoteDuVillage = null
-let have_chief=false;
 let joueurs_en_vie = [];
 let donnee_carte;
 
@@ -33,9 +30,14 @@ function gererRouteURL() {
     else
     {
         if (hash.startsWith('#join:')) {
+            console.log(localStorage);
             const gameId = hash.substring(hash.indexOf(':') + 1);
             console.log(`URL détectée : Rejoindre la partie ${gameId}`);
-            Rejoindre_salle(gameId);
+            if (localStorage.getItem("roomId")) {
+                Reconnexion_salle(gameId);
+            }
+            else{console.log("dans rejoindre");
+                Rejoindre_salle(gameId);}
         } else {
             ecranAccueil.style.display = 'block';
             ecranJeu.style.display = 'none';
@@ -80,25 +82,6 @@ function changeSalleHote(gameId){
 function launch_game(){
     launch();
 }
-
-async function gererCycleJeu() {
-    day = !day;
-    document.querySelector("#menu-carte").style.display = 'flex';
-    if (day) {
-        periodActuelle = 'JOUR';
-    }
-    else
-        periodActuelle = 'NUIT';
-
-    if (periodActuelle === "NUIT") {
-        nightGame();
-    } else {
-        await dayGame();
-    }
-    // On relance le chrono pour la phase suivante
-    setTimeout(gererCycleJeu, DUREE_PHASE);
-}
-
 
 function showCarte(data){
     const donnee = data;
@@ -406,6 +389,7 @@ function clickPotionTuer(){
     socket.send(JSON.stringify(data));
 }
 function gameOver(data){
+    localStorage.removeItem("roomId");
     const over = document.getElementById("game-over");
     over.classList.remove("hidden-overlay");
     const message = over.querySelector(".over");

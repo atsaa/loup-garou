@@ -4,8 +4,8 @@ const messageInput = document.getElementById('messageInput');
 var Nombre_de_joeur;
 //const socket = new WebSocket('ws://localhost:8080');
 //const socket = new WebSocket('ws:192.168.197.132:8080');
-const isIp = "192.168.195.132";
-const ip ="ws:192.168.195.132:8080";
+const isIp = "192.168.204.132";
+const ip = "ws:192.168.204.132:8080";
 const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
 || window.location.hostname === isIp;
 
@@ -18,7 +18,7 @@ const socket = new WebSocket(socketUrl);
 let phasePeriod;
 let phaseActuelle = "SEEYOURCARD";
 let estEnPartie = false;
-let maire = false;
+let maire = undefined;
 
 function iniatilisation()
 {
@@ -48,7 +48,10 @@ function salle_enter(str){
 socket.addEventListener('message', function (event) {
     try {
         const messageData = JSON.parse(event.data);
-        if (messageData.type === 'CLIENT_COUNT') {
+        if (messageData.type === "ROOMID_DOESNT_EXIST") {
+            localStorage.removeItem("roomId");
+        }
+        else if (messageData.type === 'CLIENT_COUNT') {
             console.log(messageData);
             numsplayers.innerHTML=messageData.count;
             changeSalle();
@@ -58,6 +61,7 @@ socket.addEventListener('message', function (event) {
         }
         else if(messageData.type === 'GAME_LAUNCH'){
             recept_launch_game(messageData);
+            localStorage.setItem("roomId", messageData.roomId);
             estEnPartie = true;
         }
         else if(messageData.type === 'GAME_OVER')
@@ -89,33 +93,15 @@ socket.addEventListener('message', function (event) {
                 gererAffichagePhase(messageData.phase, messageData);
         }
         else if (messageData.type === 'JOUR' && estEnPartie){
-            console.log("jour");
-            if (phasePeriod !== 'JOUR')
-                dayGame();
-            if (messageData.phase !== phaseActuelle)
-                gererAffichagePhase(messageData.phase, messageData);
-            if (messageData.phase === 'VOTE_MAIRE')
-                launch_vote_maire(messageData.timer);
-            else if (messageData.phase === 'VOTE')
-                launch_vote(messageData.timer, "VOTE");
-            else if (messageData.phase === 'TIMER_PHASE') {
-                console.log("timer_phase jour");
-                launch_timer(messageData);
-            }
-            phasePeriod = 'JOUR';
+           PeriodeJour(messageData);
         }
         else if (messageData.type === 'NUIT' && estEnPartie){
-            console.log("nuit", messageData.phase, phaseActuelle);
-            if (phasePeriod !== "NUIT")
-                nightGame();
-            if (messageData.phase !== phaseActuelle)
-                gererAffichagePhase(messageData.phase, messageData);
-            if (messageData.phase === 'VOTE_LOUP')
-                launch_vote(messageData.timer, "VOTE_LOUP");
-            else if (messageData.phase === 'TIMER_PHASE') {
-                launch_timer(messageData);
-            }
-            phasePeriod = "NUIT";
+            PeriodeNuit(messageData);
+        }
+        else if (messageData.type === 'REPRISE') {
+            console.log("reprise", messageData.phase, phaseActuelle);
+            estEnPartie = true;
+            recept_reprise_game(messageData);
         }
         else{ 
         }
@@ -125,8 +111,43 @@ socket.addEventListener('message', function (event) {
     }
 });
 
+function PeriodeNuit(data){
+    const messageData = data
+    console.log("nuit", messageData.phase, phaseActuelle);
+    if (phasePeriod !== "NUIT")
+        nightGame();
+    if (messageData.phase !== phaseActuelle)
+        gererAffichagePhase(messageData.phase, messageData);
+    if (messageData.phase === 'VOTE_LOUP')
+        launch_vote(messageData.timer, "VOTE_LOUP");
+    else if (messageData.phase === 'TIMER_PHASE') {
+        launch_timer(messageData);
+    }
+    phasePeriod = "NUIT";
+}
+
+function PeriodeJour(data){
+    const messageData = data;
+    console.log("jour");
+    if (phasePeriod !== 'JOUR')
+        dayGame();
+    if (messageData.phase !== phaseActuelle)
+        gererAffichagePhase(messageData.phase, messageData);
+    if (messageData.phase === 'VOTE_MAIRE')
+        launch_vote_maire(messageData.timer);
+    else if (messageData.phase === 'VOTE')
+        launch_vote(messageData.timer, "VOTE");
+    else if (messageData.phase === 'TIMER_PHASE') {
+        console.log("timer_phase jour");
+        launch_timer(messageData);
+    }
+    phasePeriod = 'JOUR';
+}
+
+
 // 4. Événement d'erreur
 socket.addEventListener('error', function (event) {
+    localStorage.removeItem("roomId");
     console.log('Erreur de connexion WebSocket.');
 });
 
@@ -141,6 +162,18 @@ function sendMessage() {
         socket.send(JSON.stringify(message)); // Envoie le message au serveur
         messageInput.value = '';
     }
+}
+function Reconnexion_salle(){
+    pseudo = localStorage.getItem('NameLoupGarou');
+    gameId = localStorage.getItem("roomId");
+    console.log("Tentative de RECONNEXION...");
+    socket.addEventListener('open', function (event) {
+        socket.send(JSON.stringify({
+            type: "RECONNEXION",
+            name: pseudo,
+            gameId: gameId,
+        }));
+    });
 }
 
 function Rejoindre_salle(gameId){
@@ -163,10 +196,44 @@ function launch(){
 
 function recept_launch_game(data){
     salle_attente.style.display = 'none';
-    showCarte(data.data);
+    showCarte(data.carte);
     joueurs_en_vie = data.list_players;
     console.log(data);
     console.log(joueurs_en_vie);
+}
+
+function recept_reprise_game(data){
+    changeSalle();
+    salle_attente.style.display = 'none';
+    joueurs_en_vie = data.list_players;
+    donnee_carte = data.carte;
+    console.log(data);
+    console.log(joueurs_en_vie);
+    maire = data.maire;
+    if (data.typeNow === 'LAUNCH_GAME'){
+        showCarte(data.carte);
+    }
+    else if (data.typeNow === 'JOUR') {
+        PeriodeJour(data);
+        if (data.phase === 'VOTE_MAIRE') {
+            receive_vote(data);
+        }
+        else if (data.phase === 'VOTE') {
+            receive_vote(data);
+        }
+    }
+    else if(data.typeNow === 'NUIT'){
+        PeriodeNuit(data);
+        if (data.phase === 'VOTE_LOUP') {
+            receive_vote(data);
+        }
+        else if (data.phase === 'SORCIERE_KILLER'){
+            receive_vote(data);
+        }
+        else{
+            console.log('nahhh');
+        }
+    }
 }
 
 function launch_vote_maire(duree){
