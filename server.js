@@ -923,7 +923,7 @@ ws.on('close', (code) => {
                 console.log(`Délai dépassé pour ${name}. Élimination.`);
                 eliminerDefinitivement(joueur, roomId);
             }
-        }, 6000); // 1 minute de grâce
+        }, 60000); // 1 minute de grâce
       }
     });
 })

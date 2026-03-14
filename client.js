@@ -429,7 +429,7 @@ function gameOver(data){
     console.log("JEU Termine", data);
     setTimeout(() => {
         window.location.replace("index.html"); 
-    }, 300000);return;
+    }, 5000);return;
 }
 
 function hideParameter(){

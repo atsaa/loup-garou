@@ -30,6 +30,7 @@ function validerCode(){
             alert("Enregistrer un nom a sauvegarder");
             return;
         }
+        localStorage.setItem("NameLoupGarou", names.value);
     }
     ecranAccueil.querySelector("#TheGame").classList.add("hidden-overlay");
     ecranAccueil.querySelector("#EnterGame").classList.remove("hidden-overlay");
