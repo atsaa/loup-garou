@@ -454,10 +454,10 @@ function etapeJour(roomId)
       lancerTimer(roomId, 2, etapeJour, "JOUR", "VOTE");
       break;
     case 'VOTE_MAIRE':
-      lancerTimer(roomId, 200, etapeJour, "JOUR", "VOTE");
+      lancerTimer(roomId, 60, etapeJour, "JOUR", "VOTE");
       break;
     case 'VOTE':
-      lancerTimer(roomId, 2, PeriodeDuJeu, "NUIT", "ATTENTE");
+      lancerTimer(roomId, 120, PeriodeDuJeu, "NUIT", "ATTENTE");
       break;
   }
 }
@@ -468,17 +468,17 @@ function etapeNuit(roomId)
   salle.typeNow = 'NUIT';
     switch(salle.phase) {
         case "ATTENTE":
-            lancerTimer(roomId, 1, PeriodeDuJeu, "NUIT", "VOTE_LOUP"); // Lance le timer de 5s puis revient ici
+            lancerTimer(roomId, 10, PeriodeDuJeu, "NUIT", "VOTE_LOUP"); // Lance le timer de 5s puis revient ici
             break;
         case "CHARGEMENT":
             salle.phase = "VOTE";
-            lancerTimer(roomId, 2, PeriodeDuJeu); // Lance le timer de 30s puis revient ici
+            lancerTimer(roomId, 5, PeriodeDuJeu); // Lance le timer de 30s puis revient ici
             break;
         case "VOTE_LOUP":
-            lancerTimer(roomId, 10, PeriodeDuJeu, "JOUR", "TRANSITION_DAY", ROLE.LOUP, ATTRIBUTS.LOUP); // Enchaîne sur la nuit
+            lancerTimer(roomId, 60, PeriodeDuJeu, "JOUR", "TRANSITION_DAY", ROLE.LOUP, ATTRIBUTS.LOUP); // Enchaîne sur la nuit
             break;
         case "SORCIERE":
-            lancerTimer(roomId, 2, PeriodeDuJeu, "JOUR", "TRANSITION_DAY", ROLE.SORCIERE, ATTRIBUTS.SORCIERE);
+            lancerTimer(roomId, 30, PeriodeDuJeu, "JOUR", "TRANSITION_DAY", ROLE.SORCIERE, ATTRIBUTS.SORCIERE);
             break;
     }
 }
