@@ -4,8 +4,8 @@ const messageInput = document.getElementById('messageInput');
 var Nombre_de_joeur;
 //const socket = new WebSocket('ws://localhost:8080');
 //const socket = new WebSocket('ws:192.168.197.132:8080');
-const isIp = "192.168.204.132";
-const ip = "ws:192.168.204.132:8080";
+const isIp = "192.168.95.132";
+const ip = "ws:192.168.95.132:8080";
 const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
 || window.location.hostname === isIp;
 
@@ -14,24 +14,31 @@ const socketUrl = isLocal
     ? ip
     : window.location.origin.replace(/^http/, 'ws');
 console.log(isLocal, socketUrl);
-let socket = new WebSocket(socketUrl);
 let phasePeriod;
 let phaseActuelle = "SEEYOURCARD";
 let estEnPartie = false;
 let maire = undefined;
+let numsPlayers = 4;
 let reconnectInterval = undefined;
 let refresh = true;
+let salleCree=false;
+let socket;
 
 function connecter() {
+    if (typeof socket != undefined && socket && socket.readyState === 0) {
+        console.log("Il y a déjà une tentative en cours, j'attends celle-là.");
+        return; 
+    }
     socket = new WebSocket(socketUrl);
     socket.addEventListener('open', function (event) {
+        //ici aussi on supprimera
+        document.body.style.backgroundImage = 'none';
         console.log("Connecté !");
-        if (reconnectInterval)
-            clearInterval(reconnectInterval); // On arrête de tenter la reconnexion
-        reconnectInterval = undefined;
+        socket.send(JSON.stringify({type:'DEBUT', value:localStorage.getItem('NameLoupGarou')}));
         gererRouteURL();
         if (refresh) {
             console.log(event.data);
+            /* A supprimer  */
             if (localStorage.getItem('NameLoupGarou'))
                 logMessage('Connecté au serveur.', 'received', localStorage.getItem('NameLoupGarou'));
             else
@@ -43,14 +50,39 @@ function connecter() {
     socket.addEventListener('message', function (event) {
         try {
             const messageData = JSON.parse(event.data);
-            console.log(messageData);
             if (messageData.type === "ROOMID_DOESNT_EXIST") {
                 localStorage.removeItem("roomId");
             }
+            else if(messageData.type === "CODE_CORRECT"){
+                Rejoindre_salle(messageData.roomId);
+            }
+            else if(messageData.type === "INVALIDE_CODE"){
+                console.log("code incorrecte");
+                codeIncorrect();
+            }
             else if (messageData.type === 'CLIENT_COUNT') {
                 console.log(messageData);
-                numsplayers.innerHTML=messageData.count;
-                changeSalle();
+                numsPlayersConnected.innerHTML=messageData.count;
+                if (!salleCree){
+                    changeSalle();
+                    numsPlayers = messageData.numsPlayersForGame;
+                    AfficheNumsPlayers();
+                    salleCree = true;
+                }
+                hideAffichePlayer();
+                affichePlayer(messageData);
+                ConnectedMessage(messageData.name, true);
+            }
+            else if(messageData.type === "NUMBERS_PLAYERS_UPDATE"){
+                numsPlayers = messageData.numsPlayersForGame;
+                AfficheNumsPlayers();
+                const span_nums = document.getElementById('usersalle-nums');
+                pos = span_nums.textContent.indexOf('/')
+                text = span_nums.textContent.slice(0, pos)+`/ ${numsPlayers}`;
+                span_nums.textContent = text;
+            }
+            else if (messageData.type === "CONNECTE_ALREADY") {
+                console.log('tu es deja connecte dans cette salle sur un autre onglet');
             }
             else if(messageData.type === 'SALLE_CREEE'){
                 changeSalleHote(messageData.gameId);
@@ -60,16 +92,25 @@ function connecter() {
                 localStorage.setItem("roomId", messageData.roomId);
                 estEnPartie = true;
             }
-            else if(messageData.type === 'GAME_OVER')
-            {
-                gameOver(messageData);
-                console.log("JEU Termine", messageData);
-            }
             else if(messageData.type === 'MESSAGE'){
-                logMessage(messageData.message, 'received', messageData.name);
+                console.log('oksd de', phaseActuelle);
+                if (phaseActuelle === 'VOTE_LOUP') {
+                    logMessageLoup(messageData.message, 'received', messageData.name);
+                }
+                else
+                    logMessage(messageData.message, 'received', messageData.name);
+            }
+            else if (messageData.type === 'PLAYER_DECONNECTE'){
+                ConnectedMessage(messageData.name, false);
+                joueurs_en_vie = messageData.joueurs_en_vie;
+                if (!estEnPartie) {
+                    hideAffichePlayer();
+                    affichePlayer(messageData);
+                }
             }
             else if (messageData.type === 'ERREUR') {
                 console.log(messageData.message);
+                window.location.replace("index.html"); 
             }
             else if(messageData.type === 'MY_VOTE_ELIMINATION'){
                 receive_vote(messageData);
@@ -81,6 +122,12 @@ function connecter() {
                 phaseActuelle = "SEEYOURCARD";
                 console.log(messageData.type, messageData.phase, phaseActuelle);
             }
+            else if (messageData.type === 'CANDIDATE_MAIRE'){
+                console.log('ehehe');
+                hide_vote_chef();
+                show_vote_chef(messageData);
+                receive_vote(messageData);
+            }
             else if (messageData.type === "CHOIX_MAIRE") {
                 maire = messageData.value;
             }
@@ -89,7 +136,7 @@ function connecter() {
                     gererAffichagePhase(messageData.phase, messageData);
             }
             else if (messageData.type === 'JOUR' && estEnPartie){
-            PeriodeJour(messageData);
+                PeriodeJour(messageData);
             }
             else if (messageData.type === 'NUIT' && estEnPartie){
                 PeriodeNuit(messageData);
@@ -106,20 +153,33 @@ function connecter() {
             console.log("jsuis dans le catch ", event.data);
         }
     });
-    socket.onclose = () => {
-        console.warn("Connexion perdue. Tentative de reconnexion...");  
-        // On évite de lancer plusieurs intervalles en même temps
-        if (!reconnectInterval) {
-            reconnectInterval = setInterval(() => {
+    socket.onclose = (event) => {
+        console.log(event.code);
+        if (event.code === 4001) {
+            alert("La partie est en cours, vous ne pouvez pas avoir deux onglets !");
+            window.location.replace("index.html"); 
+            return; // Stoppe la boucle de reconnexion
+        }
+        else if (event.code === 4002) {
+            alert("La partie est deja encours");
+            window.location.replace("index.html");
+            return;
+        }
+        console.warn("Connexion perdue. Tentative de reconnexion..."); 
+        reconnectInterval = setTimeout(() => {
                 console.log("Tentative de reconnexion en cours...");
                 connecter(); // On relance la fonction de base
             }, 3000); 
-        }
     };
     // 4. Événement d'erreur
     socket.addEventListener('error', function (event) {
+
         localStorage.removeItem("roomId");
-        console.log('Erreur de connexion WebSocket.');
+        console.log('Erreur de connexion WebSocket.', event);
+        /*A supprimer apres*/
+        document.body.style.backgroundImage = "url('images/error.jpg')";
+        document.body.style.backgroundSize = 'cover';
+        document.body.style.backgroundPosition = 'center';
     });
 }
 
@@ -215,6 +275,9 @@ function launch(){
 
 function recept_launch_game(data){
     salle_attente.style.display = 'none';
+    sons.wolf.play();
+    sons.wolf.volume = 0.5;
+    hideParameter();
     showCarte(data.carte);
     joueurs_en_vie = data.list_players;
     console.log(data);
@@ -223,8 +286,9 @@ function recept_launch_game(data){
 
 function recept_reprise_game(data){
     changeSalle();
+    hideParameter();
     salle_attente.style.display = 'none';
-    joueurs_en_vie = data.list_players;
+    joueurs_en_vie = data.joueurs_en_vie;
     donnee_carte = data.carte;
     console.log(data);
     console.log(joueurs_en_vie);
@@ -263,7 +327,13 @@ function launch_vote_maire(duree){
 
 function launch_vote(duree, phase){
     //timerTransitionClient(timer);//temps pour la transition
-    document.querySelector(".timer").textContent = duree; 
+    if (duree > 59) {
+        min = Math.floor(duree/60);
+        second = duree%60;
+        document.querySelector(".timer").textContent = `${min.toString().padStart(2, '0')}:${second.toString().padStart(2, '0')}`;
+    }
+    else
+        document.querySelector(".timer").textContent = `00:${duree.toString().padStart(2, '0')}`;
     phaseActuelle = phase;
 }
 
@@ -286,6 +356,37 @@ function logMessage(text, type, name) {
     messagesDiv.scrollTop = messagesDiv.scrollHeight; // Scroll auto
 }
 
+function logMessageLoup(text, type, name){
+    const p1= document.createElement('p');
+    const p = document.createElement('p');
+    p1.classList.add('usertalk');
+    p1.textContent = name;
+    p.classList.add(type);
+    p.textContent = text;
+    const div = document.createElement('div');
+    div.appendChild(p1);
+    div.appendChild(p);
+    div.classList.add("messageLoup");
+    messagesDiv.appendChild(div);
+}
+
+function ConnectedMessage(name, istrue){
+    const div = document.createElement('div');
+    div.style.width ='100%';
+    div.style.fontSize = '12px';
+    div.style.display = 'flex';
+    div.style.justifyContent = 'center';
+    div.style.opacity = 0.7;
+    if (istrue) {
+          div.innerHTML = `<p><strong>${name} </strong> a rejoint la partie</p>`;  
+    }
+    else{
+        div.innerHTML = `<p>le joueur <strong>${name}</strong>
+        a ete deconnecte de la partie<p>`;
+    }
+    messagesDiv.appendChild(div);
+}
+
 function specialMessage(message, messageDeMort){
     const clone = document.getElementById('template-special-message').content.cloneNode(true);
     myDiv=clone.firstElementChild;
@@ -299,7 +400,7 @@ function specialMessage(message, messageDeMort){
         myDiv.querySelector(".pop-up-message").classList.add('bleu');
     }
     if (message) {
-        p.innerHTML = message;    
+        p.innerHTML = message;
     }
     else
         p.textContent = "blabalbaslbaslb";
@@ -321,4 +422,19 @@ function sendYourMaireVote(my_vote, name){
         nameVotant:name,
     }
     socket.send(JSON.stringify(data));
+}
+
+function gameOver(data){
+    AffichegameOver(data);
+    console.log("JEU Termine", data);
+    setTimeout(() => {
+        window.location.replace("index.html"); 
+    }, 300000);return;
+}
+
+function hideParameter(){
+    const para = document.getElementById("parameter");
+    const paraRole = document.getElementById("parametre-role");
+    para.classList.add("hidden-overlay");
+    paraRole.classList.add("hidden-simple");
 }

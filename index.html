@@ -11,14 +11,24 @@
     <link rel="stylesheet" href="css.css">
 </head>
 <body>
-    <div id="Accueil" style="display: block;">
-        <div class="container">
+    <div id="Accueil" style="display: none;">
+        <div id="TheGame" class="container">
             <input type="text" id="nameInput" placeholder="Entrez votre nom">
-            <button class="btn1">Rejoindre une salle</button>
+            <button class="btn1" onclick="validerCode()">Rejoindre une salle</button>
             <button class="btn2", onclick="creerNouvellePartie()">creer une partie</button>
         </div>
+        <form action="" id="EnterGame" class="container hidden-overlay">
+            <input id="codeSalle" required>
+            <span></span>
+            <button onclick="EntrerCode(event)" class="btn1">Commencer la partie</button>
+        </form>
     </div>
     <div id="salle-game" style="display: none;">
+        <div id="parameter" class="btn-parameter">
+            <button class="btn-icon", onclick="parametresJeu()">
+                <img src="images/icons/parametres.png" alt="parametre">
+            </button>
+        </div>
         <div id="salle-attente-game">
             <div class="menu-lancer">
                 <div class="exit-the-game">
@@ -26,12 +36,18 @@
                 </div>
                 <div class="pop-up-number-player">
                     <h5>Nombre de joueur connecté.. </h5>
-                    <p id="numsPlayers"> 0</p>
+                    <p id="numsPlayersConnected"> 0</p>
                 </div>
                 <button id="start" onclick="launch_game()">Lancer</button>
             </div>
             <input type="text" id="lien-a-copier" readonly>
             <button onclick="copierLien()">Copier le lien</button>
+            <div id="usersalle">
+                <div id="perso-grid">
+                    
+                </div>
+                <center><span id="usersalle-nums"></span></center>
+            </div>
         </div>
         <div class="wrapper-messagerie">
             <div id="messagerie" style="display: none;">
@@ -57,40 +73,22 @@
        <!-- votes du villages pop-up -->
         <div class="wrapper-vote-village">
             <div class="div-vote">
-                <span class="titre">Vote du jour</span><br>
-                <span> Votez pour eliminer un joueur!</span><br>
+                <span class="titre">Vote du jour</span>
+                <span class="voter-elimination"> Votez pour eliminer un joueur!</span>
+                <center>
+                <input type="button" value="Se presenter" class="btn2 hidden-overlay " id="candidateMaire" onclick="candidateMaire()">
+                </center>
                 <span class="timer"></span>
                 <ul class="liste-vote-du-village">
                 </ul>
             </div>
         </div>
-        <!-- lire la carte du joueur -->
-        <template id="template-carte">
-            <div class="flip-card" onclick="this.classList.toggle('flipped')">
-                <div class="flip-card-inner">
-                    <div class="flip-card-front">
-                        <p class="bas">Cliquez pour lire le rôle!</p>
-                    </div>
-                    <div class="flip-card-back">
-                        <h2 class="card-name"></h2>
-                        <p class="card-description"></p>
-                    </div>
-                </div>
-            </div>
-        </template>
-    </div>
 
+    <!--    transition que j'utilise meme pas mdr    -->
     <div id="transition-overlay" class="hidden-overlay">
         <div id="transition-message">Le village s'endort...</div>
     </div>
-    <!-- vote du village-->
-    <template id="template-vote-du-village">
-        <li class="player-item">
-            <div></div>
-            <span class="name"></span>
-            <span class="votes"></span>
-        </li>
-    </template>
+
     <!-- popup de la sorciere   -->
     <div id="popup-sorciere" class="pop-up hidden-overlay">
     <div class="sorciere-card">
@@ -123,6 +121,55 @@
         </div>
     </div>
     <!--    fin     -->
+
+     <!--     fin du jeu    -->
+    <div id="game-over" class="pop-up hidden-overlay">
+        <div class="pop-up-end-game bleu">
+            <span class="over"></span>
+        </div>
+    </div>
+    <!--        dashboard du parametre du jeu   -->
+    <div id="parametre-role" class="wrapper-parameter  hidden-simple">
+        <div class="nombrePlayers"> 
+            <p>Nombres de joueurs</p>
+            <div class="select-number-players">
+                <button onclick="prec()"><</button>
+                <span id="precNumber"></span>
+                <div id="nowNumber"></div>
+                <span id="nextNumber"></span>
+                <button onclick="next()">></button>
+            </div>
+            <span></span>
+        </div>
+        <div id="composition">
+            <p><strong>composition</strong></p>
+            <div id="composition-role">
+               
+            </div>
+        </div>
+    </div>
+
+    </div>
+
+
+    <!-- vote du village-->
+    <template id="template-vote-du-village">
+        <li class="player-item">
+            <div></div>
+            <span class="name"></span>
+            <span class="votes"></span>
+        </li>
+    </template>
+
+    <!--        icon du personnage    -->
+        <template id="template-icon-perso">
+            <div>
+                <div class="icon-perso"></div>
+                <span></span>
+            </div>
+        </template>
+
+
     <!-- special message-->
      <template id="template-special-message">
         <div id="wrapper-special-message">
@@ -134,15 +181,42 @@
             </div>
         </div>
      </template>
-     <!--     fin du jeu    -->
-    <div id="game-over" class="pop-up hidden-overlay">
-        <div class="pop-up-end-game bleu">
-            <span class="over"></span>
+
+
+    <!-- lire la carte du joueur -->
+        <template id="template-carte">
+            <div class="flip-card" onclick="this.classList.toggle('flipped')">
+                <div class="flip-card-inner">
+                    <div class="flip-card-front">
+                        <p class="bas">Cliquez pour lire le rôle!</p>
+                    </div>
+                    <div class="flip-card-back">
+                        <h2 class="card-name"></h2>
+                        <p class="card-description"></p>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+
+<!--        template pour les roles des personnages -->
+    <template id="template-role">
+        <div class="section-perso">
+            <button class="btn-role">-</button>
+            <div class="icon-perso"></div>
+            <div class="icon-mark">?</div>
+            <div id="info-role">
+                <h3></h3>
+                <span></span>
+            </div>
+            <button class="btn-role">+</button>
+            <span>3</span>
         </div>
-    </div>
+    </template>
 </body>
 </html>
 <script src="js.js"></script>
 <script src="client.js"></script>
+<script src="dataClient.js"></script>
 </body>
 </html>

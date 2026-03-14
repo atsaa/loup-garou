@@ -1,10 +1,18 @@
 const names = document.getElementById("nameInput")
 var p = document.querySelector("#nameInput")
-var numsplayers=document.getElementById("numsPlayers");
+var numsPlayersConnected=document.getElementById("numsPlayersConnected");
 const ecranAccueil = document.getElementById('Accueil');
 var ecranJeu = document.getElementById('salle-game');
 let game_active=document.querySelector('#salle-de-jeu-active');
 let salle_attente = document.querySelector('#salle-attente-game');
+
+const sons = {
+    wolf: new Audio("music/wolf.mp3"),
+   /* nuit: new Audio('/sons/ambiance_nuit.mp3'),
+    mort: new Audio('/sons/mort.mp3'),
+    clic: new Audio('/sons/vote_clic.mp3')*/
+};
+
 
 const DUREE_PHASE = 1200; // 2 minutes en millisecondes
 let showRoleCarte = null;
@@ -15,9 +23,71 @@ let donnee_carte;
 document.addEventListener('DOMContentLoaded', () => {
     connecter();
 });
+
+function validerCode(){
+    if (!localStorage.getItem("NameLoupGarou")) {
+        if (names.value.trim() === '') {
+            alert("Enregistrer un nom a sauvegarder");
+            return;
+        }
+    }
+    ecranAccueil.querySelector("#TheGame").classList.add("hidden-overlay");
+    ecranAccueil.querySelector("#EnterGame").classList.remove("hidden-overlay");
+}
+function EntrerCode(event){
+    console.log('jai code')
+    let code = ecranAccueil.querySelector("#codeSalle").value;
+    if (code.trim() == '')
+    {
+        return;
+    }
+    event.preventDefault();
+    console.log(code);
+    data={
+        gameId:`${code}`,
+        name:localStorage.getItem("NameLoupGarou"),
+        type:'VALIDER_CODE'
+    }
+    ecranAccueil.querySelector("#codeSalle").value = '';
+    socket.send(JSON.stringify(data));
+}
+function codeIncorrect(){
+    const codeGame = ecranAccueil.querySelector("#EnterGame");
+    codeGame.querySelector("span").innerHTML="code incorrecte ou \ncette salle deja en cours";
+    codeGame.querySelector("span").style.color ='yellow';
+}
+
+function parametresJeu(){
+    const parametreRole = document.getElementById("parametre-role");
+    if (parametreRole.classList.contains("hidden-simple"))
+    {    
+        parametreRole.classList.remove("hidden-simple");
+    }
+    else{
+        parametreRole.classList.add("hidden-simple");
+    }
+}
+
+liste_role = []
+function sectionRole(){
+    const compo = document.getElementById("composition-role");
+    for (let index = 0; index < datas.length - 2; index++) {     
+        const clone = document.getElementById("template-role").content.cloneNode(true);
+        const div = clone.firstElementChild;
+        liste_role[index] = div;
+        const role = div.querySelector('.icon-perso');
+        role.style.backgroundImage = `url(${datas[index].url})`;
+        const infoRole = div.querySelector('#info-role');
+        infoRole.querySelector("h3").textContent = datas[index].name
+        infoRole.querySelector("span").innerHTML = `<strong>Role</strong>: ${datas[index].description}`
+        compo.appendChild(div);
+    }
+}
+
 function changeSalle(){
     ecranAccueil.style.display = 'none';
     ecranJeu.style.display = 'block';
+    sectionRole();
 }
 
 // Cette fonction décide quelle div afficher
@@ -26,6 +96,8 @@ function gererRouteURL() {
     console.log(localStorage.getItem('NameLoupGarou'));
     if (!localStorage.getItem('NameLoupGarou')) {
         console.log('dsd');
+        ecranAccueil.style.display = 'block';
+        ecranJeu.style.display = 'none';
     }
     else
     {
@@ -56,9 +128,10 @@ function messagerie_visible(){
 }
 
 function creerNouvellePartie() {
-    if (names.value.trim() == '')
-    {
-        return;
+    if (!localStorage.getItem("NameLoupGarou")) {
+        if (names.value.trim() === '') {
+            return;
+        }
     }
     data={
         name:`${names.value}`,
@@ -70,11 +143,10 @@ function creerNouvellePartie() {
 }
 
 function changeSalleHote(gameId){
-    ecranAccueil.style.display = 'none';
-    ecranJeu.style.display = 'block';
     const lienDePartage = window.location.origin + '/#join:' + gameId;
     document.getElementById('lien-a-copier').value = lienDePartage;
     console.log(lienDePartage);
+    changeSalle();
     window.location.href = lienDePartage;
     return ;
 }
@@ -105,7 +177,7 @@ function showCarte(data){
     }
     clone.querySelector(".card-name").textContent = donnee.name;
     clone.querySelector(".card-description").textContent = donnee.attribut;
-    ecranJeu.appendChild(clone);
+    document.body.appendChild(clone);
 }
 
 function hideCarte(){
@@ -117,18 +189,25 @@ function hideCarte(){
 }
 
 liste_joueurs = []; 
-function show_vote_chef(){
+function show_vote_chef(data){
+    const name = localStorage.getItem('NameLoupGarou');
+    const candidateForMayor = data.list ? data.list:[];
     const wrapper_vote_village = document.querySelector(".wrapper-vote-village");
+    if (!candidateForMayor.includes(name)) {
+        console.log('je dois etre ici une seule fois ', candidateForMayor);
+        wrapper_vote_village.querySelector('#candidateMaire').classList.remove('hidden-overlay');
+    }
+    wrapper_vote_village.querySelector(".voter-elimination").textContent='Votez Pour elir le maire'
     document.querySelector(".div-vote").classList.add("div-vote-chef");
     wrapper_vote_village.style.display = 'flex';
     const liste = document.querySelector('.liste-vote-du-village');
-    for (let index = 0; index < joueurs_en_vie.length; index++) {
+    for (let index = 0; index < candidateForMayor.length; index++) {
         const clone = document.getElementById('template-vote-du-village').content.cloneNode(true);   
         const li = clone.firstElementChild;
         li.classList.add("li-chef");
-        li.dataset.id = joueurs_en_vie[index];
+        li.dataset.id = candidateForMayor[index];
         liste_joueurs[index] = li;        
-        liste_joueurs[index].querySelector(".name").textContent = joueurs_en_vie[index];
+        liste_joueurs[index].querySelector(".name").textContent = candidateForMayor[index];
         liste_joueurs[index].querySelector(".votes").textContent = "0";
         li.addEventListener("click",()=>{
             document.querySelector('.liste-vote-du-village').classList.add('waiting');
@@ -174,6 +253,7 @@ function hide_vote_chef(){
         });
         liste_joueurs.length = 0;
    }
+    document.querySelector('#candidateMaire').classList.add('hidden-overlay');
     document.querySelector(".div-vote").classList.remove("div-vote-chef");  
     document.querySelector(".wrapper-vote-village").style.display = 'none';
 }
@@ -195,10 +275,21 @@ function vote_elimante_villageois(selectedPlayerId, li){
     return selectedPlayerId;
 }
 
-function show_vote(){
+function whoVote(value){
+    const message = 'Votez Pour éliminer un joueur';
+    const message2 = 'choisir qui vous allez tuer';
+    if (value === "SORCIERE") {
+        return message2;
+    }
+    return message;
+}
+
+function show_vote(value){
     const wrapper_vote_village = document.querySelector(".wrapper-vote-village");
     wrapper_vote_village.style.display = 'flex';
+    wrapper_vote_village.querySelector(".voter-elimination").textContent = whoVote(value);
     document.querySelector(".liste-vote-du-village").classList.add("ul-vote-village");
+    document.querySelector(".div-vote").classList.add("div-vote-village"); 
     const liste = document.querySelector('.liste-vote-du-village');
     for (let index = 0; index < joueurs_en_vie.length; index++) {
         const clone = document.getElementById('template-vote-du-village').content.cloneNode(true);   
@@ -231,6 +322,7 @@ function hide_vote(){
         liste_joueurs.length = 0;
     }
     document.querySelector(".liste-vote-du-village").classList.remove("ul-vote-village");
+    document.querySelector(".div-vote").classList.remove("div-vote-village");  
     document.querySelector(".wrapper-vote-village").style.display = 'none';
 }
 function show_transition(data)
@@ -262,7 +354,7 @@ function afficheCarteMenu(){
 }
 
 function gererAffichagePhase(newPhase, data) {
-    //console.log(newPhase, phaseActuelle);
+    console.log(newPhase, phaseActuelle);
     if (phaseActuelle === "VOTE"){
         hide_vote();
     }
@@ -298,14 +390,14 @@ function gererAffichagePhase(newPhase, data) {
     switch (phaseActuelle) {
         case "VOTE":
             specialMessage("vote",false);
-            show_vote();
+            show_vote("VILLAGE");
             break;
         case "VOTE_MAIRE":
             specialMessage("vote du maire",false);
-            show_vote_chef();
+            show_vote_chef(data);
             break;
         case "VOTE_LOUP":
-            show_vote();
+            show_vote("LOUP");
             break;
         case "TRANSITION":
             show_transition(data);
@@ -314,7 +406,7 @@ function gererAffichagePhase(newPhase, data) {
             show_sorciere(data);
             break;
         case "SORCIERE_KILLER":
-            show_vote();
+            show_vote("SORCIERE");
             break;
         case "TIMER_PHASE":
             show_timer(data);
@@ -324,6 +416,9 @@ function gererAffichagePhase(newPhase, data) {
             break;
         case "MORT_NUIT":
             show_dead(data);
+            break;
+        case "GAME_OVER":
+            gameOver(data);
             break;
     }
 }
@@ -358,16 +453,31 @@ function show_dead(data){
     const popup = document.getElementById('popup-mort');
     const msg = document.getElementById('message-mort');
     // On personnalise le message
-    if (data.joueurs_mort.length){
-        const message = `<strong>${data.joueurs_mort}</strong> 
-        est mort `;
-        msg.innerHTML = message;
-        specialMessage(message, true);
+    if (data.phase === "MORT_NUIT") {
+        if (data.joueurs_mort.length){
+            const message = `<strong>${data.joueurs_mort}</strong> 
+            est mort durant la nuit`;
+            msg.innerHTML = message;
+            specialMessage(message, true);
+        }
+        else{
+            const message = "Personne n'est mort durant la nuit";
+            msg.innerHTML = message;
+            specialMessage(message, false);
+        }    
     }
-    else{
-        const message = "Personne n'est mort durant la nuit";
-        msg.innerHTML = message;
-        specialMessage(message, false);
+    else if (data.phase === "MORT_VOTE") {
+        if (data.joueurs_mort.length){
+            const message = `<strong>${data.joueurs_mort}</strong> 
+            a été éliminé par le village.`;
+            msg.innerHTML = message;
+            specialMessage(message, true);
+        }
+        else{
+            const message = "Le village n'a sacrifie personne aujourdhui";
+            msg.innerHTML = message;
+            specialMessage(message, false);
+        }
     }
     popup.classList.remove('hidden-overlay');
 }
@@ -388,10 +498,103 @@ function clickPotionTuer(){
     }
     socket.send(JSON.stringify(data));
 }
-function gameOver(data){
+
+function candidateMaire(){
+    console.log('jai appuye sur candidate maire')
+    data = {
+        type:'CANDIDATE_MAIRE',
+        name:localStorage.getItem['NameLoupGarou'],
+    }
+    socket.send(JSON.stringify(data));
+}
+
+function AffichegameOver(data){
     localStorage.removeItem("roomId");
     const over = document.getElementById("game-over");
     over.classList.remove("hidden-overlay");
     const message = over.querySelector(".over");
     message.innerHTML = `<strong>La partie a été remporté par les ${data.winner}</strong>`;
+}
+
+list_players=[];
+function affichePlayer(data){
+    const span_nums = document.getElementById('usersalle-nums');
+    const list = document.getElementById('perso-grid');
+    const persos = data.list_players;
+    span_nums.textContent = `${persos.length} / ${numsPlayers}`;
+    for (let index = 0; index < persos.length; index++) {
+        const clone = document.getElementById('template-icon-perso').content.cloneNode(true);   
+        const div = clone.firstElementChild;
+        const span = div.querySelector('span');
+        span.textContent = persos[index];
+        list_players[index] = div;
+        list.appendChild(div);
+    }
+}
+
+function hideAffichePlayer(){
+    /*rajouter une transition pour retirer la carte*/
+   if (list_players.length != 0) {
+        list_players.forEach(element => {
+            element.remove();
+        });
+        list_players.length = 0;
+   }
+}
+
+/*function hideChargement(){
+    document.getElementById("loading-screen").classList.add("hidden-overlay");
+}*/
+
+function prec(){
+    if (numsPlayers >= 4) {
+        numsPlayers--;
+    }
+    const message = {
+        type:"NUMBER_PLAYER_FOR_GAME",
+        numsPlayersForGame:numsPlayers,
+    }
+    socket.send(JSON.stringify(message));
+}
+
+function next(){
+    if (numsPlayers <= 10) {
+        numsPlayers++;
+    }
+    const message = {
+        type:"NUMBER_PLAYER_FOR_GAME",
+        numsPlayersForGame:numsPlayers,
+    }
+    socket.send(JSON.stringify(message));
+}
+
+function AfficheNumsPlayers(){
+    document.getElementById("precNumber").textContent = `${numsPlayers - 1}`
+    
+    document.getElementById("nowNumber").textContent = `${numsPlayers}`
+    
+    document.getElementById("nextNumber").textContent = `${numsPlayers + 1}`
+}
+async function copierLien(){
+    
+    const hash = window.location.hash;
+    const gameId = hash.substring(hash.indexOf(':') + 1);
+    const shareData = {
+        title: "Partie en cours",
+        text: `code du jeu: ${gameId}`,
+        url:hash
+    }
+    navigator.clipboard.writeText(shareData)
+    .then(() => {
+        console.log("Texte copié !", shareData);
+    })
+    .catch(err => {
+        console.error("Erreur : ", err);
+    });
+    try {
+        await navigator.share(shareData); // Ouvre le menu natif
+        console.log("Partagé avec succès !");
+    } catch (err) {
+        console.log("Erreur ou annulation : " + err);
+    }
 }

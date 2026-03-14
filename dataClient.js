@@ -47,4 +47,3 @@ const datas = [
     new carte("petite fille", ASSET+"/PetiteFille.png", ROLE.VILLAGEOIS, ATTRIBUTS.PETITE_FILLE,DESCRIPTION.PETITE_FILLE),
     new carte("cupidon", ASSET+"/Cupidon.png", ROLE.VILLAGEOIS, ATTRIBUTS.CUPIDON,DESCRIPTION.CUPIDON),
 ];
-module.exports = datas;
