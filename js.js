@@ -11,6 +11,7 @@ const sons = {
    /* nuit: new Audio('/sons/ambiance_nuit.mp3'),
     mort: new Audio('/sons/mort.mp3'),
     clic: new Audio('/sons/vote_clic.mp3')*/
+    
 };
 
 
