@@ -43,7 +43,7 @@ class carte {
 const datas = [
     new carte("loup", ASSET+"/LoupGarou.png", ROLE.LOUP, ATTRIBUTS.LOUP,DESCRIPTION.LOUP),
     new carte("villageois", ASSET+"/SimpleVillageois.png", ROLE.VILLAGEOIS, ATTRIBUTS.VILLAGEOIS,DESCRIPTION.VILLAGEOIS),
-    new carte("sorciere", ASSET+"/Sorcière.png", ROLE.VILLAGEOIS, ATTRIBUTS.SORCIERE,DESCRIPTION.SORCIERE),
+    new carte("sorciere", ASSET+"/Sorciere.png", ROLE.VILLAGEOIS, ATTRIBUTS.SORCIERE,DESCRIPTION.SORCIERE),
     new carte("petite fille", ASSET+"/PetiteFille.png", ROLE.VILLAGEOIS, ATTRIBUTS.PETITE_FILLE,DESCRIPTION.PETITE_FILLE),
     new carte("cupidon", ASSET+"/Cupidon.png", ROLE.VILLAGEOIS, ATTRIBUTS.CUPIDON,DESCRIPTION.CUPIDON),
 ];
