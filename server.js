@@ -80,15 +80,17 @@ function broadcastClientCount() {
     }
   });
 }
+
 function aleatoireIndex(array){
   index = Math.floor(Math.random()*array.length);
   return index
 }
+
 function algorithmAleatoire(roomId){
   const salle = sallesDeJeu[roomId];
   nums = salle.joueurs.size;
   array = [];
-  array.push(datas[0]);
+  array.push(datas[2]);
   vivi = 1;
   for (let index = 0; index < nums - 1; index++) {
     if (vivi == 2) {
