@@ -54,7 +54,13 @@ function connecter() {
                 localStorage.removeItem("roomId");
             }
             else if(messageData.type === "CODE_CORRECT"){
-                Rejoindre_salle(messageData.roomId);
+                if (localStorage.getItem("roomId"))
+                    Reconnexion_salle(messageData.roomId);
+                else
+                {
+                    changeSalleHote(messageData.roomId);
+                    Rejoindre_salle(messageData.roomId);
+                }
             }
             else if(messageData.type === "INVALIDE_CODE"){
                 console.log("code incorrecte");
@@ -156,12 +162,12 @@ function connecter() {
     socket.onclose = (event) => {
         console.log(event.code);
         if (event.code === 4001) {
-            alert("La partie est en cours, vous ne pouvez pas avoir deux onglets !");
+        //    alert("La partie est en cours, vous ne pouvez pas avoir deux onglets !");
             window.location.replace("index.html"); 
             return; // Stoppe la boucle de reconnexion
         }
         else if (event.code === 4002) {
-            alert("La partie est deja encours");
+        //    alert("La partie est deja encours");
             window.location.replace("index.html");
             return;
         }
@@ -245,6 +251,9 @@ function sendMessage() {
         messageInput.value = '';
         messageInput.focus();
     }
+   window.visualViewport.addEventListener('resize', () => {
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    });
 }
 function Reconnexion_salle(){
     pseudo = localStorage.getItem('NameLoupGarou');
@@ -416,6 +425,10 @@ function sendYourVote(my_vote, name){
     socket.send(JSON.stringify(data));
 }
 function sendYourMaireVote(my_vote, name){
+    const value = document.querySelector(".timer").textContent;
+    if (parseInt(value, 10) === 0) {
+        return;
+    }
     const data = {
         type:'MY_VOTE_MAIRE',
         myVote:my_vote,

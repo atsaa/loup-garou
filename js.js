@@ -11,7 +11,7 @@ const sons = {
    /* nuit: new Audio('/sons/ambiance_nuit.mp3'),
     mort: new Audio('/sons/mort.mp3'),
     clic: new Audio('/sons/vote_clic.mp3')*/
-    
+
 };
 
 
@@ -30,7 +30,7 @@ function validerCode(){
         if (names.value.trim() === '') {
             alert("Enregistrer un nom a sauvegarder");
             return;
-        }
+        } 
         localStorage.setItem("NameLoupGarou", names.value);
     }
     ecranAccueil.querySelector("#TheGame").classList.add("hidden-overlay");
@@ -110,7 +110,7 @@ function gererRouteURL() {
             if (localStorage.getItem("roomId")) {
                 Reconnexion_salle(gameId);
             }
-            else{console.log("dans rejoindre");
+            else{console.log("dans rejoindre"); 
                 Rejoindre_salle(gameId);}
         } else {
             ecranAccueil.style.display = 'block';
@@ -148,7 +148,7 @@ function changeSalleHote(gameId){
     const lienDePartage = window.location.origin + '/#join:' + gameId;
     document.getElementById('lien-a-copier').value = lienDePartage;
     console.log(lienDePartage);
-    changeSalle();
+    //changeSalle();
     window.location.href = lienDePartage;
     return ;
 }
@@ -211,16 +211,16 @@ function show_vote_chef(data){
         liste_joueurs[index] = li;        
         liste_joueurs[index].querySelector(".name").textContent = candidateForMayor[index];
         liste_joueurs[index].querySelector(".votes").textContent = "0";
-        li.addEventListener("click",()=>{
+        li.onclick = (event)=>{
             document.querySelector('.liste-vote-du-village').classList.add('waiting');
             setTimeout(() => {
                 document.querySelector('.liste-vote-du-village').classList.remove('waiting');
             }, 400);
             sendYourMaireVote(li.dataset.id, localStorage.getItem('NameLoupGarou'));
-        });
+        };
         liste.appendChild(li);
     }
-}
+} 
 function receive_vote(data){
     console.log(data);
     ancien = document.querySelector(".selected");
@@ -232,15 +232,28 @@ function receive_vote(data){
         if (nouveau)
             nouveau.classList.add('selected');
     }
+    else if(data.votants){
+        Object.entries(data.votants).forEach(([key, value]) =>{
+            if(key === localStorage.getItem('NameLoupGarou'))
+            {
+                const select = document.querySelector(`li[data-id="${value}"]`);
+                if (ancien)
+                    ancien.classList.remove("selected");
+                if (select)
+                    select.classList.add('selected');
+            } 
+        });
+    }
     else if(data.nameVotant === null){
         const items = document.querySelectorAll('li.selected');
         items.forEach(li => li.classList.remove('selected'));
     }
+   console.log(data.votants);
     Object.entries(data.votes).forEach(([cle, valeur]) => {
     console.log(cle, valeur);
         const li = document.querySelector(`li[data-id="${cle}"]`);
         if (li) {
-            li.querySelector(".votes").textContent = valeur;
+            li.querySelector(".votes").textContent = valeur; 
         }
     });
    // document.querySelector('.liste-vote-du-village').remove('waiting');
@@ -304,13 +317,13 @@ function show_vote(value){
         li.dataset.id = joueurs_en_vie[index];
         liste_joueurs[index] = li;
         liste_joueurs[index].querySelector(".name").textContent = joueurs_en_vie[index];
-        li.addEventListener("click",()=>{
+        li.onclick = (event) => {
             document.querySelector('.liste-vote-du-village').classList.add('waiting');
             setTimeout(() => {
                 document.querySelector('.liste-vote-du-village').classList.remove('waiting');
             }, 400);
             sendYourVote(li.dataset.id, localStorage.getItem('NameLoupGarou'));
-       });
+       };
         liste.appendChild(li);
     }
 }
@@ -411,6 +424,10 @@ function gererAffichagePhase(newPhase, data) {
             show_vote("SORCIERE");
             break;
         case "TIMER_PHASE":
+            if (data.attribut === ATTRIBUT.SORCIERE)
+                specialMessage("La sorciere va soigner ou empoisonner un joueur",false);
+            else if(data.attribut === ATTRIBUT.LOUP)
+                specialMessage("Les loups vont devorer un joueur",false);
             show_timer(data);
             break;
         case "MORT_VOTE":
@@ -457,8 +474,16 @@ function show_dead(data){
     // On personnalise le message
     if (data.phase === "MORT_NUIT") {
         if (data.joueurs_mort.length){
-            const message = `<strong>${data.joueurs_mort}</strong> 
-            est mort durant la nuit`;
+            let message = `<strong>${data.joueurs_mort[0]}</strong>
+            qui etait ${data.roles[0]}`;
+            for (let index = 1; index < data.joueurs_mort.length; index++) {
+                message = message +`et <strong>${data.joueurs_mort[index]}</strong>
+            qui etait ${data.roles[index]}`;
+            }
+            if (data.joueurs_mort.length > 1)
+                message = message + ` sont mort durant la nuit`;
+            else
+                message = message + ` est morts durant la nuit`;
             msg.innerHTML = message;
             specialMessage(message, true);
         }
@@ -471,7 +496,7 @@ function show_dead(data){
     else if (data.phase === "MORT_VOTE") {
         if (data.joueurs_mort.length){
             const message = `<strong>${data.joueurs_mort}</strong> 
-            a été éliminé par le village.`;
+            qui etait <strong>${data.roles}</strong> a été éliminé par le village.`;
             msg.innerHTML = message;
             specialMessage(message, true);
         }

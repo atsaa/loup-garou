@@ -88,7 +88,7 @@ function algorithmAleatoire(roomId){
   const salle = sallesDeJeu[roomId];
   nums = salle.joueurs.size;
   array = [];
-  array.push(datas[2]);
+  array.push(datas[0]);
   vivi = 1;
   for (let index = 0; index < nums - 1; index++) {
     if (vivi == 2) {
@@ -296,16 +296,19 @@ function verifierFinDePartie(roomId){
 function Deadmanaging(roomId, period, phase, func)
 {
   salle = sallesDeJeu[roomId];
+  const rolesPersos = [];
   salle.joueurs_en_vie = salle.joueurs_en_vie.filter(player=> !salle.joueurs_mort.includes(player));
   for (let index = 0; index < salle.joueurs_mort.length; index++) {
     let name = salle.joueurs_mort[index];
     salle.participants[name].estMort = true;
+    rolesPersos.push(salle.participants[name].attribut);
   }
   const data = {
         type:"JOUR",
         phase:"MORT_VOTE",
         joueurs_en_vie:salle.joueurs_en_vie,
         joueurs_mort:salle.joueurs_mort,
+        roles:rolesPersos,
   }
   if (salle.phase === 'VOTE') {
     diffuser(roomId, data);
@@ -451,7 +454,7 @@ function etapeJour(roomId)
   salle.typeNow = 'JOUR';
   switch (salle.phase) {
     case 'TRANSITION_DAY':
-      lancerTimer(roomId, 2, etapeJour, "JOUR", "VOTE");
+      lancerTimer(roomId, 3, etapeJour, "JOUR", "VOTE");
       break;
     case 'VOTE_MAIRE':
       lancerTimer(roomId, 60, etapeJour, "JOUR", "VOTE");
@@ -468,11 +471,11 @@ function etapeNuit(roomId)
   salle.typeNow = 'NUIT';
     switch(salle.phase) {
         case "ATTENTE":
-            lancerTimer(roomId, 10, PeriodeDuJeu, "NUIT", "VOTE_LOUP"); // Lance le timer de 5s puis revient ici
+            lancerTimer(roomId, 5, PeriodeDuJeu, "NUIT", "VOTE_LOUP"); // Lance le timer de 5s puis revient ici
             break;
         case "CHARGEMENT":
             salle.phase = "VOTE";
-            lancerTimer(roomId, 5, PeriodeDuJeu); // Lance le timer de 30s puis revient ici
+            lancerTimer(roomId, 6, PeriodeDuJeu); // Lance le timer de 30s puis revient ici
             break;
         case "VOTE_LOUP":
             lancerTimer(roomId, 60, PeriodeDuJeu, "JOUR", "TRANSITION_DAY", ROLE.LOUP, ATTRIBUTS.LOUP); // Enchaîne sur la nuit
@@ -722,7 +725,8 @@ wss.on('connection', function connection(ws) {
               const message = {
                 type:data.type,
                 list:salle.candidateForMayor,
-                votes:count
+                votes:count,
+                votants:salle.voteActuel
               }
               diffuser(ws.gameId, message);
             }
@@ -730,35 +734,38 @@ wss.on('connection', function connection(ws) {
         }
       }
       else if (data.type === 'MY_VOTE_ELIMINATION' || data.type === 'MY_VOTE_MAIRE') {
-        if (ws.gameId && sallesDeJeu[ws.gameId]) {
-          data.nameVotant = ws.name;
-          if (!sallesDeJeu[ws.gameId].joueurs_en_vie.includes(data.nameVotant)) {
-            ws.send(JSON.stringify({
-              type: "ERROR",
-              message: "Les morts ne parlent pas (et ne votent pas) !"
-            }));
-            return ;
-          }
-          if (!sallesDeJeu[ws.gameId].joueurs_en_vie.includes(data.myVote))
-          {
-            ws.send(JSON.stringify({
-              type: "ERROR",
-              message: "on ne vote pas les morts !",
-            }));
-            return;
-          }
-          console.log('A',sallesDeJeu[ws.gameId].timerSeconds,', jai recu le vote:',data);
-          ajouteVote(ws.gameId, data);
-          const count = countVote(ws.gameId);
-          sallesDeJeu[ws.gameId].joueurs.forEach(function each(client){
+        const salle = sallesDeJeu[ws.gameId];
+        if (salle.phase === 'VOTE' || salle.phase === 'VOTE_LOUP' || salle.phase === "VOTE_MAIRE" ) {
+          if (ws.gameId && sallesDeJeu[ws.gameId]) {
+            data.nameVotant = ws.name;
+            if (!salle.joueurs_en_vie.includes(data.nameVotant)) {
+              ws.send(JSON.stringify({
+                type: "ERROR",
+                message: "Les morts ne parlent pas (et ne votent pas) !"
+              }));
+              return ;
+            }
+            if (!salle.joueurs_en_vie.includes(data.myVote))
+            {
+              ws.send(JSON.stringify({
+                type: "ERROR",
+                message: "on ne vote pas les morts !",
+              }));
+              return;
+            }
+            console.log('A',salle.timerSeconds,', jai recu le vote:',data);
+            ajouteVote(ws.gameId, data);
+            const count = countVote(ws.gameId);
+            salle.joueurs.forEach(function each(client){
               if (client.readyState === WebSocket.OPEN) {
                 client.send(JSON.stringify({
                                 type:data.type,
                                 votes:count,
-                                myVote:sallesDeJeu[ws.gameId].voteActuel[data.nameVotant],
+                                myVote:salle.voteActuel[data.nameVotant],
                                 nameVotant:data.nameVotant}));
               }
             })
+          }
         }
       }
       else if (data.type === "SORCIERE_REPONSE") {
@@ -923,7 +930,7 @@ ws.on('close', (code) => {
                 console.log(`Délai dépassé pour ${name}. Élimination.`);
                 eliminerDefinitivement(joueur, roomId);
             }
-        }, 60000); // 1 minute de grâce
+        }, 120000); // 1 minute de grâce
       }
     });
 })

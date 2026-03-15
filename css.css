@@ -804,6 +804,10 @@ img{
     margin-top: 5px;
     margin-bottom: 10px;
 }
+#wrapper-special-message p{
+    text-align: center;
+}
+
 .bleu{
     background-color: rgb(10, 89, 236);
 }
@@ -813,11 +817,13 @@ img{
 
 .pop-up-message{
     flex-grow: 1;
-    min-height: 70px;
+    min-height: 50px;
     display: flex;
     justify-content: center;
     align-items: center;
     border-radius: 20px;
+    font-weight: 400;
+    padding: 5px;
 }
 .circle{
     height: 30px;

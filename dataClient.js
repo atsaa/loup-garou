@@ -7,6 +7,13 @@ const ATTRIBUTS = {
     PETITE_FILLE:'',
     CUPIDON:'join deux cartes',
 }
+const ATTRIBUT = {
+    VILLAGEOIS:'villageois',
+    LOUP:'loup',
+    SORCIERE:'sorciere',
+    PETITE_FILLE:'petite fille',
+    CUPIDON:'cupdion',
+}
 
 const ROLE = {
     VILLAGEOIS:'villageois',
