@@ -206,6 +206,7 @@ function diffuserSorciere(roomId, attribut, secondes){
         }
   });
 }
+
 function diffuserMorts(roomId, data){
   console.log('jsuis entre les morts', data);
   const salle = sallesDeJeu[roomId];
@@ -459,10 +460,10 @@ function etapeJour(roomId)
       lancerTimer(roomId, 3, etapeJour, "JOUR", "VOTE");
       break;
     case 'VOTE_MAIRE':
-      lancerTimer(roomId, 60, etapeJour, "JOUR", "VOTE");
+      lancerTimer(roomId, 30, etapeJour, "JOUR", "VOTE");
       break;
     case 'VOTE':
-      lancerTimer(roomId, 120, PeriodeDuJeu, "NUIT", "ATTENTE");
+      lancerTimer(roomId, 30, PeriodeDuJeu, "NUIT", "ATTENTE");
       break;
   }
 }
@@ -480,7 +481,7 @@ function etapeNuit(roomId)
             lancerTimer(roomId, 6, PeriodeDuJeu); // Lance le timer de 30s puis revient ici
             break;
         case "VOTE_LOUP":
-            lancerTimer(roomId, 60, PeriodeDuJeu, "JOUR", "TRANSITION_DAY", ROLE.LOUP, ATTRIBUTS.LOUP); // Enchaîne sur la nuit
+            lancerTimer(roomId, 30, PeriodeDuJeu, "JOUR", "TRANSITION_DAY", ROLE.LOUP, ATTRIBUTS.LOUP); // Enchaîne sur la nuit
             break;
         case "SORCIERE":
             lancerTimer(roomId, 30, PeriodeDuJeu, "JOUR", "TRANSITION_DAY", ROLE.SORCIERE, ATTRIBUTS.SORCIERE);
@@ -494,7 +495,7 @@ function PeriodeDuJeu(roomId) {
     switch (salle.period) {
       case "SEEYOURCARD":
         salle.phase = "NULL";
-        lancerTimer(roomId, 1, PeriodeDuJeu, "NUIT", "ATTENTE");
+        lancerTimer(roomId, 10, PeriodeDuJeu, "NUIT", "ATTENTE");
         break ;
       case 'JOUR':
         etapeJour(roomId);
