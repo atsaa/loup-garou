@@ -1,4 +1,4 @@
-
+const messagerie = document.getElementById('messagerie');
 const messagesDiv = document.getElementById('messages');
 const messageInput = document.getElementById('messageInput');
 var Nombre_de_joeur;
@@ -68,7 +68,6 @@ function connecter() {
             }
             else if (messageData.type === 'CLIENT_COUNT') {
                 console.log(messageData);
-                numsPlayersConnected.innerHTML=messageData.count;
                 if (!salleCree){
                     changeSalle();
                     numsPlayers = messageData.numsPlayersForGame;
@@ -99,7 +98,6 @@ function connecter() {
                 estEnPartie = true;
             }
             else if(messageData.type === 'MESSAGE'){
-                console.log('oksd de', phaseActuelle);
                 if (phaseActuelle === 'VOTE_LOUP') {
                     logMessageLoup(messageData.message, 'received', messageData.name);
                 }
@@ -120,16 +118,16 @@ function connecter() {
             }
             else if(messageData.type === 'MY_VOTE_ELIMINATION'){
                 receive_vote(messageData);
+                MessageVote(messageData);
             }
             else if(messageData.type === 'MY_VOTE_MAIRE'){
                 receive_vote(messageData);
+                MessageVote(messageData);
             }
             else if (messageData.type === 'SEEYOURCARD' && estEnPartie){
                 phaseActuelle = "SEEYOURCARD";
-                console.log(messageData.type, messageData.phase, phaseActuelle);
             }
             else if (messageData.type === 'CANDIDATE_MAIRE'){
-                console.log('ehehe');
                 hide_vote_chef();
                 show_vote_chef(messageData);
                 receive_vote(messageData);
@@ -164,7 +162,7 @@ function connecter() {
         if (event.code === 4001) {
         //    alert("La partie est en cours, vous ne pouvez pas avoir deux onglets !");
             window.location.replace("index.html"); 
-            return; // Stoppe la boucle de reconnexion
+            return;
         }
         else if (event.code === 4002) {
         //    alert("La partie est deja encours");
@@ -215,6 +213,8 @@ function PeriodeNuit(data){
         gererAffichagePhase(messageData.phase, messageData);
     if (messageData.phase === 'VOTE_LOUP')
         launch_vote(messageData.timer, "VOTE_LOUP");
+    else if (messageData.phase === 'SORCIERE_KILLER')
+        launch_vote(messageData.timer, "SORCIERE_KILLER");
     else if (messageData.phase === 'TIMER_PHASE') {
         launch_timer(messageData);
     }
@@ -232,6 +232,9 @@ function PeriodeJour(data){
         launch_vote_maire(messageData.timer);
     else if (messageData.phase === 'VOTE')
         launch_vote(messageData.timer, "VOTE");
+    else if (messageData.phase === "MAIRE_ELIMINE") {
+        launch_choix_maire_elimine(messageData.timer);
+    }
     else if (messageData.phase === 'TIMER_PHASE') {
         console.log("timer_phase jour");
         launch_timer(messageData);
@@ -240,7 +243,7 @@ function PeriodeJour(data){
 }
 
 // 5. Fonction pour envoyer un message
-function sendMessage() {  
+function sendMessage() { 
     message = {
         type:'MESSAGE',
         message:messageInput.value,
@@ -251,10 +254,11 @@ function sendMessage() {
         messageInput.value = '';
         messageInput.focus();
     }
-   window.visualViewport.addEventListener('resize', () => {
+    window.visualViewport.addEventListener('resize', () => {
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
     });
 }
+
 function Reconnexion_salle(){
     pseudo = localStorage.getItem('NameLoupGarou');
     gameId = localStorage.getItem("roomId");
@@ -334,6 +338,11 @@ function launch_vote_maire(duree){
     phaseActuelle = "VOTE_MAIRE";
 }
 
+function launch_choix_maire_elimine(duree){
+    document.querySelector(".timerMaire").textContent = duree;
+    phaseActuelle = "MAIRE_ELIMINE";
+}
+
 function launch_vote(duree, phase){
     //timerTransitionClient(timer);//temps pour la transition
     if (duree > 59) {
@@ -348,7 +357,7 @@ function launch_vote(duree, phase){
 
 function launch_timer(data){
     //timerTransitionClient(timer);//temps pour la transition
-    console.log(data);
+    //console.log(data);
     const msg = document.querySelector("#message-timer"); 
     msg.innerHTML = ` ${data.attribut}   <strong>${data.timer}</strong>`; 
 }
@@ -363,6 +372,44 @@ function logMessage(text, type, name) {
     messagesDiv.appendChild(p1);
     messagesDiv.appendChild(p);
     messagesDiv.scrollTop = messagesDiv.scrollHeight; // Scroll auto
+}
+
+messagerie.addEventListener('keydown', (event) =>{
+    if (event.key === 'Enter') {
+            sendMessage();
+        }
+    }
+);
+
+function MessageVote(data){
+    if (!data.votes[data.nameVotant])
+        return ;
+    const clone = document.getElementById('template-voteFor').content.cloneNode(true);
+    const div = clone.firstElementChild;
+    const animations = document.querySelector('.animate-vote');
+    div.querySelector('#span1Vote').textContent = data.nameVotant;
+    div.querySelector('#span2Vote').textContent = data.myVote;
+    newanim = div.querySelector('.animate-vote');
+    newanim.offsetWidth;
+    if (phaseActuelle === "VOTE_MAIRE") {
+        const voteDraw = div.querySelector('.voteBy');
+        voteDraw.style.setProperty('--color-vote', 'rgb(10, 89, 236)');
+        voteDraw.querySelector('span').textContent = '⭐';
+    }
+    messagesDiv.appendChild(clone);
+    if(animations){
+        animations.addEventListener("animationiteration",(event)=>{
+            if (event.animationName === "move") {
+                const ancienTime = animations.getAnimations()[0];
+                const newTime = newanim.getAnimations()[0]; 
+               // newTime.currentTime = ancienTime.currentTime;
+                newTime.startTime = ancienTime.startTime;
+                newanim.style.animationPlayState ='running';
+            }
+        },{once:true})
+    }
+    else
+        newanim.style.animationPlayState ='running';
 }
 
 function logMessageLoup(text, type, name){
@@ -435,6 +482,14 @@ function sendYourMaireVote(my_vote, name){
         nameVotant:name,
     }
     socket.send(JSON.stringify(data));
+}
+
+function send_eliminate_by_maire(choice){
+    const message ={
+        type:"MAIRE_ELIMINE",
+        choice:choice,
+    }
+    socket.send(JSON.stringify(message));
 }
 
 function gameOver(data){

@@ -69,6 +69,16 @@ const ATTRIBUTS = {
     CUPIDON:'cupdion',
 }
 
+const PHASE = {
+  VOTE:'VOTE',
+  VOTE_LOUP:"VOTE_LOUP",
+  VOTE_MAIRE:"VOTE_MAIRE",
+  SORCIERE:"SORCIERE",
+  SORCIERE_KILLER:"SORCIERE_KILLER",
+  MAIRE_ELIMINE:"MAIRE_ELIMINE",
+}
+
+
 function broadcastClientCount() {
   const countMessage = JSON.stringify({
     type: 'CLIENT_COUNT',
@@ -120,7 +130,8 @@ function reinitialiserVote(roomId)
     if (client.readyState === WebSocket.OPEN) {
       client.send(JSON.stringify({
           type:"MY_VOTE_ELIMINATION",
-          votes:counts,
+          countvotes:counts,
+          votes:salle.voteActuel,
           myVote:null,
           nameVotant:null}));
       }
@@ -303,8 +314,12 @@ function Deadmanaging(roomId, period, phase, func)
   salle.joueurs_en_vie = salle.joueurs_en_vie.filter(player=> !salle.joueurs_mort.includes(player));
   for (let index = 0; index < salle.joueurs_mort.length; index++) {
     let name = salle.joueurs_mort[index];
+    
     salle.participants[name].estMort = true;
     rolesPersos.push(salle.participants[name].attribut);
+    if (name === salle.maire) {
+      salle.maire = undefined;
+    }
   }
   const data = {
         type:"JOUR",
@@ -313,7 +328,10 @@ function Deadmanaging(roomId, period, phase, func)
         joueurs_mort:salle.joueurs_mort,
         roles:rolesPersos,
   }
-  if (salle.phase === 'VOTE') {
+  if (salle.phase === PHASE.VOTE) {
+    diffuser(roomId, data);
+  }
+  else if (salle.phase === PHASE.MAIRE_ELIMINE) {
     diffuser(roomId, data);
   }
   else{//on a tuer durant la nuit ducoup
@@ -338,13 +356,18 @@ function Deadmanaging(roomId, period, phase, func)
         salle.period = period;
         salle.phase = phase;
         salle.joueurs_mort = [];
+        salle.listeForMaire = [];
+        salle.choixDuMaire = undefined;
         func(roomId);
       }
-    }, 2000);
+    }, 3000);
 }
 
-function choiceMaire(){
-
+function joueurElimineByMaire(roomId){
+  const salle = sallesDeJeu[roomId];
+  if (salle.choixDuMaire) {
+    salle.joueurs_mort.push(salle.choixDuMaire); 
+  }
 }
 
 function joueurElimine(roomId, phase){
@@ -358,31 +381,51 @@ function joueurElimine(roomId, phase){
   salle.voteActuel = {};
   console.log("les resultats des votes sont:",winners);
   if (winners.length === 1) {
-    if (phase === "VOTE_LOUP") {
+    if (phase === PHASE.VOTE_LOUP) {
       salle.wolfVictim = winners[0];
     }
     salle.joueurs_mort.push(winners[0]);
+  }
+  else if (winners.length > 1){
+    if (phase === PHASE.VOTE && salle.maire) {
+      salle.phase = PHASE.MAIRE_ELIMINE;
+      salle.listeForMaire = winners;
+      const message = {
+        type:salle.period,
+        phase:PHASE.MAIRE_ELIMINE,
+        listeForMaire:winners,
+      }
+      diffuser(roomId, message);
+    }
   }
 }
 
 function finPhase(roomId, func, period, phase) {
   const salle = sallesDeJeu[roomId];
-  if (salle.phase === "VOTE_MAIRE") {
+  if (salle.phase === PHASE.VOTE_MAIRE) {
     sendMaire(roomId);
   }
   else if (salle.phase === "TRANSITION_DAY") {
     if (!salle.maire)
-      Deadmanaging(roomId, period, "VOTE_MAIRE", func);
+      Deadmanaging(roomId, period, PHASE.VOTE_MAIRE, func);
     else
       Deadmanaging(roomId, period, phase, func)
     return ;
   }
   else if (salle.period === "JOUR" && salle.phase === "VOTE") {
     joueurElimine(roomId, salle.phase);
+    if (salle.phase === PHASE.VOTE)
+      Deadmanaging(roomId, period, phase, func);
+    else
+      func(roomId);
+    return ;
+  }
+  else if (salle.period === "JOUR" && salle.phase === PHASE.MAIRE_ELIMINE) {
+    joueurElimineByMaire(roomId);
     Deadmanaging(roomId, period, phase, func);
     return ;
   }
-  else if (salle.phase === "VOTE_LOUP"){
+  else if (salle.phase === PHASE.VOTE_LOUP){
     joueurElimine(roomId, salle.phase);
     const sorciereVivante = salle.joueurs_en_vie.find(p => 
         salle.participants[p].attribut === ATTRIBUTS.SORCIERE
@@ -457,14 +500,16 @@ function etapeJour(roomId)
   salle.typeNow = 'JOUR';
   switch (salle.phase) {
     case 'TRANSITION_DAY':
-      lancerTimer(roomId, 3, etapeJour, "JOUR", "VOTE");
+      lancerTimer(roomId, 2, etapeJour, "JOUR", "VOTE");
       break;
-    case 'VOTE_MAIRE':
-      lancerTimer(roomId, 30, etapeJour, "JOUR", "VOTE");
+    case PHASE.VOTE_MAIRE:
+      lancerTimer(roomId, 60, etapeJour, "JOUR", "VOTE");
       break;
-    case 'VOTE':
+    case PHASE.VOTE:
+      lancerTimer(roomId, 120, PeriodeDuJeu, "NUIT", "ATTENTE");
+      break;
+    case PHASE.MAIRE_ELIMINE:
       lancerTimer(roomId, 30, PeriodeDuJeu, "NUIT", "ATTENTE");
-      break;
   }
 }
  
@@ -474,13 +519,13 @@ function etapeNuit(roomId)
   salle.typeNow = 'NUIT';
     switch(salle.phase) {
         case "ATTENTE":
-            lancerTimer(roomId, 5, PeriodeDuJeu, "NUIT", "VOTE_LOUP"); // Lance le timer de 5s puis revient ici
+            lancerTimer(roomId, 4, PeriodeDuJeu, "NUIT", PHASE.VOTE_LOUP); // Lance le timer de 5s puis revient ici
             break;
         case "CHARGEMENT":
             salle.phase = "VOTE";
             lancerTimer(roomId, 6, PeriodeDuJeu); // Lance le timer de 30s puis revient ici
             break;
-        case "VOTE_LOUP":
+        case PHASE.VOTE_LOUP:
             lancerTimer(roomId, 30, PeriodeDuJeu, "JOUR", "TRANSITION_DAY", ROLE.LOUP, ATTRIBUTS.LOUP); // Enchaîne sur la nuit
             break;
         case "SORCIERE":
@@ -508,13 +553,17 @@ function PeriodeDuJeu(roomId) {
 
 function countVote(Id){
   const count = {};
-  sallesDeJeu[Id].joueurs_en_vie.forEach( joueurs => {
+  const salle = sallesDeJeu[Id];
+  salle.joueurs_en_vie.forEach( joueurs => {
     count[joueurs] = 0;
   });
 
-  Object.values(sallesDeJeu[Id].voteActuel).forEach(vote=>{
+  Object.values(salle.voteActuel).forEach(vote=>{
     if (vote) {
       count[vote] = (count[vote] || 0) + 1;
+      if ((salle.timerSeconds >= 30) && (count[vote] >= Math.ceil(salle.joueurs_en_vie.length / 2))) {
+        salle.timerSeconds = 25;
+      }
     }
   });
   return count;
@@ -604,6 +653,8 @@ wss.on('connection', function connection(ws) {
             encours:false,
             maire:undefined,
             numsPlayersForGame:4,
+            choixDuMaire:undefined,
+            listeForMaire:[],
           };
           sallesDeJeu[gameId].joueurs.add(ws);
           ws.gameId = gameId;
@@ -631,14 +682,16 @@ wss.on('connection', function connection(ws) {
         }
       }
       else if (data.type === 'REJOINDRE_SALLE') {
+         console.log('je suis dans rejoindre');
           const gameId = data.gameId;
           const salle_Cible = sallesDeJeu[gameId];
+         console.log('le gameid de rejoindre est', gameId);
           if (salle_Cible) {
-            if (salle.encours) {
+            if (salle_Cible.encours) {
               ws.close(4002, "session deja encours");
               return;
             }
-           // console.log(salle_Cible.joueurs);
+            console.log(salle_Cible.joueurs);
             for (let client of salle_Cible.joueurs) {
                   if (client.name === data.name) {
                       console.log('Ce pseudo est deja connecte');
@@ -728,7 +781,8 @@ wss.on('connection', function connection(ws) {
               const message = {
                 type:data.type,
                 list:salle.candidateForMayor,
-                votes:count,
+                countVotes:count,
+                votes:salle.voteActuel,
                 votants:salle.voteActuel
               }
               diffuser(ws.gameId, message);
@@ -738,7 +792,7 @@ wss.on('connection', function connection(ws) {
       }
       else if (data.type === 'MY_VOTE_ELIMINATION' || data.type === 'MY_VOTE_MAIRE') {
         const salle = sallesDeJeu[ws.gameId];
-        if (salle.phase === 'VOTE' || salle.phase === 'VOTE_LOUP' || salle.phase === "VOTE_MAIRE" ) {
+        if (salle.phase === 'VOTE' || salle.phase === 'VOTE_LOUP' || salle.phase === "VOTE_MAIRE" || salle.phase === "SORCIERE_KILLER") {
           if (ws.gameId && sallesDeJeu[ws.gameId]) {
             data.nameVotant = ws.name;
             if (!salle.joueurs_en_vie.includes(data.nameVotant)) {
@@ -759,16 +813,32 @@ wss.on('connection', function connection(ws) {
             console.log('A',salle.timerSeconds,', jai recu le vote:',data);
             ajouteVote(ws.gameId, data);
             const count = countVote(ws.gameId);
-            salle.joueurs.forEach(function each(client){
-              if (client.readyState === WebSocket.OPEN) {
-                client.send(JSON.stringify({
-                                type:data.type,
-                                votes:count,
-                                myVote:salle.voteActuel[data.nameVotant],
-                                nameVotant:data.nameVotant}));
-              }
-            })
+            const message = {
+                              type:data.type,
+                              countVotes:count,
+                              votes:salle.voteActuel,
+                              myVote:salle.voteActuel[data.nameVotant],
+                              nameVotant:data.nameVotant};
+            if (salle.phase === PHASE.VOTE_LOUP) {
+              diffuserLoups(ws.gameId, message);
+            }
+            else if (salle.phase === PHASE.SORCIERE_KILLER) {
+              if (salle.participants[ws.name].attribut === ATTRIBUTS.SORCIERE)
+                ws.send(JSON.stringify(message));
+            }
+            else
+              diffuser(ws.gameId, message);
           }
+        }
+      }
+      else if (data.type === PHASE.MAIRE_ELIMINE) {
+        if (ws.gameId && sallesDeJeu[ws.gameId]) {
+          const salle = sallesDeJeu[ws.gameId]
+          if (salle.maire === ws.name){
+            console.log(data);
+            salle.choixDuMaire = data.choice;
+            salle.timerSeconds = 1;
+          } 
         }
       }
       else if (data.type === "SORCIERE_REPONSE") {
@@ -819,10 +889,10 @@ wss.on('connection', function connection(ws) {
                 joueurs_mort:salle.joueurs_mort
             };
             switch (salle.phase) {
-              case "VOTE_LOUP":
+              case PHASE.VOTE_LOUP:
                 message.attribut = ATTRIBUTS.LOUP;
                 if (joueur.role === ROLE.LOUP){
-                  message.votes = count;
+                  message.countVotes = count;
                 }
                 else{
                   message.phase = "TIMER_PHASE";
@@ -840,27 +910,31 @@ wss.on('connection', function connection(ws) {
                 break;
               case "SORCIERE_KILLER":
                 if (joueur.attribut === ATTRIBUTS.SORCIERE) {
-                  message.votes = count;
+                  message.countVotes = count;
                 }
                 else
                   message.phase = "TIMER_PHASE";
                 break;
               case "VOTE":
-                  message.votes = count;
+                  message.countVotes = count;
                   if (salle.timerSeconds <= 0) {
                     message.phase = "MORT_VOTE";
                   }
                 break;
               case "VOTE_MAIRE":
                   message.list = salle.candidateForMayor;
-                  message.votes = count;
+                  message.countVotes = count;
+                  break;
+              case PHASE.MAIRE_ELIMINE:
+                  message.listeForMaire = salle.listeForMaire;
+                  break;
               case "TRANSITION_DAY":
                   if (salle.timerSeconds <= 0) {
                     message.phase = "MORT_NUIT";
                   }
                 break;
               default:
-                message.votes = count;
+                message.countVotes = count;
                 break;
             }
             ws.send(JSON.stringify(message));
@@ -880,7 +954,7 @@ wss.on('connection', function connection(ws) {
            }
            else if (sallesDeJeu[ws.gameId].period === 'NUIT') {
             console.log(sallesDeJeu[ws.gameId].participants[ws.name].role);
-              if (sallesDeJeu[ws.gameId].phase === 'VOTE_LOUP' && sallesDeJeu[ws.gameId].participants[ws.name].role === ROLE.LOUP) {
+              if (sallesDeJeu[ws.gameId].phase === PHASE.VOTE_LOUP && sallesDeJeu[ws.gameId].participants[ws.name].role === ROLE.LOUP) {
                 diffuserLoups(ws.gameId, data);
               }
            }
@@ -933,13 +1007,12 @@ ws.on('close', (code) => {
                 console.log(`Délai dépassé pour ${name}. Élimination.`);
                 eliminerDefinitivement(joueur, roomId);
             }
-        }, 120000); // 1 minute de grâce
+        }, 240000); // 2 minute de grâce
       }
     });
 })
 
 function eliminerDefinitivement(p, roomId){
-  reinitialisationDay(roomId);
   console.log('Un client s\'est déconnecté.');
   const salle = sallesDeJeu[roomId];
   if (salle) {

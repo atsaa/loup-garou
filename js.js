@@ -7,12 +7,8 @@ let game_active=document.querySelector('#salle-de-jeu-active');
 let salle_attente = document.querySelector('#salle-attente-game');
 
 const sons = {
-    wolf: new Audio("music/wolf.mp3"),
-   /* nuit: new Audio('/sons/ambiance_nuit.mp3'),
-    mort: new Audio('/sons/mort.mp3'),
-    clic: new Audio('/sons/vote_clic.mp3')*/
-
-};
+            wolf: new Audio("music/wolf.mp3"),
+            };
 
 
 const DUREE_PHASE = 1200; // 2 minutes en millisecondes
@@ -36,16 +32,13 @@ function validerCode(){
     ecranAccueil.querySelector("#TheGame").classList.add("hidden-overlay");
     ecranAccueil.querySelector("#EnterGame").classList.remove("hidden-overlay");
 }
+
 function EntrerCode(event){
-    console.log('jai code')
     let code = ecranAccueil.querySelector("#codeSalle").value;
-    if (code.trim() == '')
-    {
-        return;
-    }
+    if (code.trim() == '') return;
+
     event.preventDefault();
-    console.log(code);
-    data={
+    data = {
         gameId:`${code}`,
         name:localStorage.getItem("NameLoupGarou"),
         type:'VALIDER_CODE'
@@ -53,6 +46,7 @@ function EntrerCode(event){
     ecranAccueil.querySelector("#codeSalle").value = '';
     socket.send(JSON.stringify(data));
 }
+
 function codeIncorrect(){
     const codeGame = ecranAccueil.querySelector("#EnterGame");
     codeGame.querySelector("span").innerHTML="code incorrecte ou \ncette salle deja en cours";
@@ -76,9 +70,10 @@ function sectionRole(){
     for (let index = 0; index < datas.length - 2; index++) {     
         const clone = document.getElementById("template-role").content.cloneNode(true);
         const div = clone.firstElementChild;
-        liste_role[index] = div;
         const role = div.querySelector('.icon-perso');
+        liste_role[index] = div;
         role.style.backgroundImage = `url(${datas[index].url})`;
+
         const infoRole = div.querySelector('#info-role');
         infoRole.querySelector("h3").textContent = datas[index].name
         infoRole.querySelector("span").innerHTML = `<strong>Role</strong>: ${datas[index].description}`
@@ -95,32 +90,33 @@ function changeSalle(){
 // Cette fonction décide quelle div afficher
 function gererRouteURL() {
     const hash = window.location.hash;
-    console.log(localStorage.getItem('NameLoupGarou'));
     if (!localStorage.getItem('NameLoupGarou')) {
-        console.log('dsd');
         ecranAccueil.style.display = 'block';
         ecranJeu.style.display = 'none';
     }
     else
     {
         if (hash.startsWith('#join:')) {
-            console.log(localStorage);
+            const lienDePartage = window.location;
             const gameId = hash.substring(hash.indexOf(':') + 1);
+            document.getElementById('lien-a-copier').value = lienDePartage;
             console.log(`URL détectée : Rejoindre la partie ${gameId}`);
+            
             if (localStorage.getItem("roomId")) {
                 Reconnexion_salle(gameId);
             }
-            else{console.log("dans rejoindre"); 
-                Rejoindre_salle(gameId);}
-        } else {
+            else{
+                console.log("dans rejoindre"); 
+                Rejoindre_salle(gameId);
+            }
+        }
+        else {
             ecranAccueil.style.display = 'block';
             ecranJeu.style.display = 'none';
-            console.log(hash);
         }
    }
 }
 
-var messagerie= document.querySelector("#messagerie");
 
 function messagerie_visible(){
     if (messagerie.style.display != 'none')
@@ -131,9 +127,7 @@ function messagerie_visible(){
 
 function creerNouvellePartie() {
     if (!localStorage.getItem("NameLoupGarou")) {
-        if (names.value.trim() === '') {
-            return;
-        }
+        if (names.value.trim() === '') return;
     }
     data={
         name:`${names.value}`,
@@ -147,7 +141,6 @@ function creerNouvellePartie() {
 function changeSalleHote(gameId){
     const lienDePartage = window.location.origin + '/#join:' + gameId;
     document.getElementById('lien-a-copier').value = lienDePartage;
-    console.log(lienDePartage);
     //changeSalle();
     window.location.href = lienDePartage;
     return ;
@@ -158,13 +151,11 @@ function launch_game(){
 }
 
 function showCarte(data){
-    const donnee = data;
-    donnee_carte = donnee;
-    console.log(data);
+    const donnee = data
     const clone = document.getElementById('template-carte').content.cloneNode(true);
-    showRoleCarte = clone.firstElementChild;
     const flip_carte = clone.querySelector(".flip-card-front");
-    console.log(donnee.name);
+    showRoleCarte = clone.firstElementChild;
+    donnee_carte = donnee;
     if (donnee.name == 'loup') {
         flip_carte.classList.add('role-loup')
     }
@@ -195,14 +186,17 @@ function show_vote_chef(data){
     const name = localStorage.getItem('NameLoupGarou');
     const candidateForMayor = data.list ? data.list:[];
     const wrapper_vote_village = document.querySelector(".wrapper-vote-village");
+    
     if (!candidateForMayor.includes(name)) {
-        console.log('je dois etre ici une seule fois ', candidateForMayor);
         wrapper_vote_village.querySelector('#candidateMaire').classList.remove('hidden-overlay');
     }
+    
     wrapper_vote_village.querySelector(".voter-elimination").textContent='Votez Pour elir le maire'
     document.querySelector(".div-vote").classList.add("div-vote-chef");
     wrapper_vote_village.style.display = 'flex';
+    
     const liste = document.querySelector('.liste-vote-du-village');
+    
     for (let index = 0; index < candidateForMayor.length; index++) {
         const clone = document.getElementById('template-vote-du-village').content.cloneNode(true);   
         const li = clone.firstElementChild;
@@ -220,11 +214,50 @@ function show_vote_chef(data){
         };
         liste.appendChild(li);
     }
-} 
+}
+
+liste_choix = [];
+let choixDuMaireDiv;
+function    show_eliminate_by_maire(data){
+    const clone = document.getElementById('template-eliminate-candidate').content.cloneNode(true);   
+    const div = clone.firstElementChild;
+    choixDuMaireDiv = div;
+    const list = div.querySelector(".list-perso");
+    const candidateForEliminate = data.listeForMaire;
+    for (let index = 0; index < candidateForEliminate.length; index++) {
+        const candidate = document.createElement('div');
+        candidate.classList.add("candidate");
+
+        const iconPerso = document.createElement('div');
+        iconPerso.classList.add("icon-perso");
+        candidate.appendChild(iconPerso);
+        
+        const span = document.createElement('span');
+        span.textContent = candidateForEliminate[index];
+        candidate.appendChild(span);
+
+        candidate.dataset.id = candidateForEliminate[index];
+
+        list.appendChild(candidate);
+       // liste_choix[index] = candidate;
+        candidate.onclick = (event)=>{
+            setTimeout(() => {
+                document.querySelector('#eliminate-candidate').classList.remove('waiting');
+            }, 400);
+            send_eliminate_by_maire(candidate.dataset.id);
+        };
+    }
+    ecranJeu.appendChild(div);
+}
+
+function hide_eliminate_by_maire(){
+    choixDuMaireDiv.remove();
+}
+
 function receive_vote(data){
-    console.log(data);
-    ancien = document.querySelector(".selected");
     const nouveau = document.querySelector(`li[data-id="${data.myVote}"]`);
+    
+    ancien = document.querySelector(".selected");
     if (data.nameVotant === localStorage.getItem('NameLoupGarou'))
     {
         if(ancien)
@@ -248,15 +281,15 @@ function receive_vote(data){
         const items = document.querySelectorAll('li.selected');
         items.forEach(li => li.classList.remove('selected'));
     }
-   console.log(data.votants);
-    Object.entries(data.votes).forEach(([cle, valeur]) => {
-    console.log(cle, valeur);
+
+    console.log(data.countVotes);
+    if (!(data.countVotes)) return ;
+    Object.entries(data.countVotes).forEach(([cle, valeur]) => {
         const li = document.querySelector(`li[data-id="${cle}"]`);
         if (li) {
             li.querySelector(".votes").textContent = valeur; 
         }
     });
-   // document.querySelector('.liste-vote-du-village').remove('waiting');
 }
 
 function hide_vote_chef(){
@@ -301,11 +334,13 @@ function whoVote(value){
 
 function show_vote(value){
     const wrapper_vote_village = document.querySelector(".wrapper-vote-village");
+    const liste = document.querySelector('.liste-vote-du-village');
+
     wrapper_vote_village.style.display = 'flex';
     wrapper_vote_village.querySelector(".voter-elimination").textContent = whoVote(value);
     document.querySelector(".liste-vote-du-village").classList.add("ul-vote-village");
     document.querySelector(".div-vote").classList.add("div-vote-village"); 
-    const liste = document.querySelector('.liste-vote-du-village');
+
     for (let index = 0; index < joueurs_en_vie.length; index++) {
         const clone = document.getElementById('template-vote-du-village').content.cloneNode(true);   
         const li = clone.firstElementChild;
@@ -327,6 +362,7 @@ function show_vote(value){
         liste.appendChild(li);
     }
 }
+
 function hide_vote(){
 /*rajouter une transition pour retirer la carte
     */
@@ -340,6 +376,7 @@ function hide_vote(){
     document.querySelector(".div-vote").classList.remove("div-vote-village");  
     document.querySelector(".wrapper-vote-village").style.display = 'none';
 }
+
 function show_transition(data)
 {
     const overlay = document.getElementById('transition-overlay');
@@ -358,14 +395,12 @@ function nightGame(){
     ecranJeu.classList.add('night');
 }
 
-
 function afficheCarteMenu(){
     console.log(donnee_carte);
-    if (showRoleCarte) {
+    if (showRoleCarte)
         hideCarte();
-    }
     else
-    showCarte(donnee_carte);
+        showCarte(donnee_carte);
 }
 
 function gererAffichagePhase(newPhase, data) {
@@ -375,6 +410,9 @@ function gererAffichagePhase(newPhase, data) {
     }
     else if(phaseActuelle === "VOTE_MAIRE"){
         hide_vote_chef();
+    }
+    else if (phaseActuelle === "MAIRE_ELIMINE") {
+        hide_eliminate_by_maire();
     }
     else if (phaseActuelle === "SEEYOURCARD") {
         document.querySelector("#menu-carte").style.display = 'flex';
@@ -401,15 +439,21 @@ function gererAffichagePhase(newPhase, data) {
     else if (phaseActuelle === 'MORT_NUIT') {
         document.getElementById('popup-mort').classList.add('hidden-overlay');
     }
+    
     phaseActuelle = newPhase;
+    
     switch (phaseActuelle) {
         case "VOTE":
-            specialMessage("vote",false);
+            specialMessage("vote", false);
             show_vote("VILLAGE");
             break;
         case "VOTE_MAIRE":
-            specialMessage("vote du maire",false);
+            specialMessage("vote du maire", false);
             show_vote_chef(data);
+            break;
+        case "MAIRE_ELIMINE":
+            specialMessage("le maire va eliminer un joueur", false);
+            show_eliminate_by_maire(data);
             break;
         case "VOTE_LOUP":
             show_vote("LOUP");
@@ -441,6 +485,7 @@ function gererAffichagePhase(newPhase, data) {
             break;
     }
 }
+
 function show_sorciere(data){
     console.log(data);
     const popup = document.getElementById('popup-sorciere');
@@ -462,10 +507,10 @@ function show_sorciere(data){
 }
 
 function show_timer(){
-    console.log('jsuis dans show_timer'); 
     const popup = document.getElementById('popup-timer');
     popup.classList.remove('hidden-overlay'); 
 }
+
 function show_dead(data){
     console.log(data);
     joueurs_en_vie = data.joueurs_en_vie;
@@ -477,13 +522,13 @@ function show_dead(data){
             let message = `<strong>${data.joueurs_mort[0]}</strong>
             qui etait ${data.roles[0]}`;
             for (let index = 1; index < data.joueurs_mort.length; index++) {
-                message = message +`et <strong>${data.joueurs_mort[index]}</strong>
+                message = message +` et <strong>${data.joueurs_mort[index]}</strong>
             qui etait ${data.roles[index]}`;
             }
             if (data.joueurs_mort.length > 1)
-                message = message + ` sont mort durant la nuit`;
+                message = message + ` sont morts durant la nuit`;
             else
-                message = message + ` est morts durant la nuit`;
+                message = message + ` est mort durant la nuit`;
             msg.innerHTML = message;
             specialMessage(message, true);
         }
@@ -491,7 +536,7 @@ function show_dead(data){
             const message = "Personne n'est mort durant la nuit";
             msg.innerHTML = message;
             specialMessage(message, false);
-        }    
+        }
     }
     else if (data.phase === "MORT_VOTE") {
         if (data.joueurs_mort.length){
@@ -510,7 +555,6 @@ function show_dead(data){
 }
 
 function clickPotionSauver(){
-    console.log("j'ai clique");
     data = {
         type:'SORCIERE_REPONSE',
         choice:'SAUVER'
@@ -548,6 +592,7 @@ function affichePlayer(data){
     const span_nums = document.getElementById('usersalle-nums');
     const list = document.getElementById('perso-grid');
     const persos = data.list_players;
+    numsPlayersConnected.innerHTML = persos.length;
     span_nums.textContent = `${persos.length} / ${numsPlayers}`;
     for (let index = 0; index < persos.length; index++) {
         const clone = document.getElementById('template-icon-perso').content.cloneNode(true);   
@@ -602,13 +647,14 @@ function AfficheNumsPlayers(){
     
     document.getElementById("nextNumber").textContent = `${numsPlayers + 1}`
 }
+
 async function copierLien(){
     
     const hash = window.location.hash;
     const gameId = hash.substring(hash.indexOf(':') + 1);
     const shareData = {
         title: "Partie en cours",
-        text: `code du jeu: ${gameId}`,
+        text: `code du jeu: ${gameId}\n`,
         url:hash
     }
     navigator.clipboard.writeText(shareData)

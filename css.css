@@ -14,8 +14,10 @@ input, button, select, textarea {
     font-family: inherit; 
 }
 :root{
+    --color-vote:rgb(255, 102, 0);
     --color-msg:rgba(5, 7, 27, 0.945);
-    --color-param:rgb(36, 36, 67)
+    --color-param:rgb(36, 36, 67);
+    --animation:cubic-bezier(0.215, 0.610, 0.355, 1);
 }
 
 /*  design des pseudos*/
@@ -387,7 +389,64 @@ img{
     width: 100%;
     object-fit: cover;
 }
-
+.container-vote{
+    display: flex;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+#span1Vote, #span2Vote{
+    width: 80px;
+    text-align: center;
+    font-size: 14px;
+}
+.vote-counter{
+    display: flex;
+    background-color: rgba(178, 33, 33, 0.2);
+    height: 45px;
+    color: white;
+    justify-content: space-between;
+    align-items: center;
+    width: 200px;
+    border-radius: 25px;
+    padding: 5px;
+}
+.voteBy{
+    height: 30px;
+    width: 30px;
+    background-color: var(--color-vote);
+    border-radius: 50%;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1;
+}
+.voteBy::after{
+    content: "";
+    left: 10px;
+    top: 5px;
+    transform: rotate(45deg);
+    border-radius: 2px;
+    width: 20px;
+    height: 20px;
+    position: absolute;
+    background-color: var(--color-vote);
+    z-index: -1;
+}
+.voteBy>span{
+    color: white;
+}
+.container-anim{
+    position: relative;
+    width: 150px;
+}
+.animate-vote{
+    animation: move ease-in-out 1s infinite;
+    visibility: 0;
+    opacity: 0;
+    position: relative;
+    /*animation-play-state: paused;*/
+}
 .sent {
     color: blue;
     margin-top: 0px;
@@ -425,6 +484,20 @@ img{
     width: 50px;
 }
 
+@keyframes move {
+    0%{
+        transform: translateX(0) scale(1);
+        opacity: 0;
+    }
+    1%{
+        transform: translateX(0) scale(1);
+        opacity: 1;
+    }
+    100%{
+        transform: translateX(60px) scale(0.2);
+        opacity: 0;
+    }
+}
 /*  css duran la salle-de-jeu-active  */
 .carte{
     height: 25em;
@@ -716,13 +789,44 @@ img{
 /*popup de la sorciere*/
 
 .pop-up{
-    top: 100px;
-    display: flex;
     justify-content: center;
     z-index: 1;
     /*pointer-events: none;*/
 }
 
+#eliminate-candidate, .pop-up{
+    top: 80px;
+    display: flex;
+}
+
+#eliminate-candidate{
+    z-index: 1;
+    background-color: rgba(27, 25, 25, 0.766);
+    width: 80%;
+    min-height: 200px;
+    position: absolute;
+    flex-direction: column;
+    align-items: center;
+    border-radius: 10px;
+    left: 50%;
+    right: 50%;
+    transform: translate(-50%);
+    color: white;
+    padding: 10px;
+}
+.list-perso, .candidate{
+    display: flex;
+}
+.list-perso{
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin: 20px;
+}
+.candidate{
+    flex-direction: column;
+    align-items: center;
+}
 .sorciere-card {
     background: #02021a; /* Fond bleu nuit */
     padding: 10px;
@@ -809,10 +913,10 @@ img{
 }
 
 .bleu{
-    background-color: rgb(10, 89, 236);
+    background-color: rgb(10, 89, 236) !important;
 }
 .rouge{
-    background-color: red;
+    background-color: red !important;
 }
 
 .pop-up-message{

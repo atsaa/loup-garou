@@ -50,7 +50,7 @@
             </div>
         </div>
         <div class="wrapper-messagerie">
-            <div id="messagerie" style="display: none;">
+            <div id="messagerie" style="display: none;"  tabindex="0">
                 <div id="messages"></div>
                 <div class="input-area">
                     <input type="text" id="messageInput" placeholder="Ecrire votre message...">
@@ -144,7 +144,6 @@
         <div id="composition">
             <p><strong>composition</strong></p>
             <div id="composition-role">
-               
             </div>
         </div>
     </div>
@@ -169,7 +168,22 @@
             </div>
         </template>
 
-
+    <!-- template vote contre vote pour -->
+     <template id="template-voteFor">
+        <div class="container-vote">
+            <div class="vote-counter">
+                <span id="span1Vote"></span>
+                <div class="container-anim">
+                    <div id="badge" class="animate-vote">
+                        <div class="voteBy">
+                            <span>🗡️</span>
+                        </div>
+                    </div>
+                </div>
+                <span id="span2Vote"></span>
+            </div>
+        </div>
+     </template>
     <!-- special message-->
      <template id="template-special-message">
         <div id="wrapper-special-message">
@@ -182,7 +196,17 @@
         </div>
      </template>
 
-
+     <!-- template pour message de choix --->
+    <template id="template-eliminate-candidate">
+        <div id="eliminate-candidate" >
+            <span>Eliminer un candidat</span>
+            <div class="list-perso">
+          <!--      <div class="candidate"> <div class="icon-perso"></div> <span>roro</span></div>-->
+            </div>
+            <span class="timerMaire"></span>
+        </div>
+    </template>
+    
     <!-- lire la carte du joueur -->
         <template id="template-carte">
             <div class="flip-card" onclick="this.classList.toggle('flipped')">
