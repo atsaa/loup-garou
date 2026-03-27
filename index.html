@@ -9,10 +9,18 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Creepster&family=MedievalSharp&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css.css">
+    <link rel="icon" type="image/x-icon" href="images/icons/icon-512x512.png">
 </head>
 <body>
     <div id="Accueil" style="display: none;">
         <div id="TheGame" class="container">
+            <!-- Se choisir une icon-->
+            <div class="select-icon-players">
+                <button onclick="precPerso()" class="btn-rond"><</button>
+                <div id="persoAcceuil" class="icon-perso"></div>
+                <button onclick="nextPerso()"  class="btn-rond">></button>
+            </div>
+
             <input type="text" id="nameInput" placeholder="Entrez votre nom">
             <button class="btn1" onclick="validerCode()">Rejoindre une salle</button>
             <button class="btn2", onclick="creerNouvellePartie()">creer une partie</button>
@@ -62,13 +70,20 @@
             <div class="icon" id="see-msg" onclick="messagerie_visible()">
                 <img src="images/icons/chat.png" alt="">
             </div>
+            <div id="notification"><span></span></div>
         </div>
         <div id="salle-de-jeu-active">
            
         </div>
-        <div id="menu-carte">
-            <div id="my-carte" onclick="afficheCarteMenu()"></div>
-            <div id="liste-carte"></div>
+        <div id="barre-menu">
+            <div id="theVotes" onclick="afficheTheVote()">
+                <span class="emoji">✔️</span>
+                <span id="listvote" onclick=""></span>
+            </div>
+            <div id="menu-carte">
+                <div id="my-carte" onclick="afficheCarteMenu()"></div>
+                <div id="liste-carte"></div>
+            </div>
         </div>
        <!-- votes du villages pop-up -->
         <div class="wrapper-vote-village">
@@ -84,70 +99,77 @@
             </div>
         </div>
 
-    <!--    transition que j'utilise meme pas mdr    -->
-    <div id="transition-overlay" class="hidden-overlay">
-        <div id="transition-message">Le village s'endort...</div>
-    </div>
+        <!--    transition que j'utilise meme pas mdr    -->
+        <div id="transition-overlay" class="hidden-overlay">
+            <div id="transition-message">Le village s'endort...</div>
+        </div>
 
-    <!-- popup de la sorciere   -->
-    <div id="popup-sorciere" class="pop-up hidden-overlay">
-    <div class="sorciere-card">
-        <div class="content">
-            <p id="message-victime"></p>
+        <!-- popup de la sorciere   -->
+        <div id="popup-sorciere" class="pop-up hidden-overlay">
+        <div class="sorciere-card">
+            <div class="content">
+                <p id="message-victime"></p>
+            </div>
+            <div class="actions">
+                <button id="btn-sauver" class="btn-potion" onclick="clickPotionSauver()"><img src="images/icons/fiolesoso.png" alt="fiole sorciere"></button>
+                <button id="btn-tuer" class="btn-potion" onclick="clickPotionTuer()"><img src="images/icons/fiolesoso.png" alt="fiole sorciere"></button>
+                <br>
+                <button id="btn-rien" class="btn-passer">Ne rien faire</button>
+            </div>
         </div>
-        <div class="actions">
-            <button id="btn-sauver" class="btn-potion" onclick="clickPotionSauver()"><img src="images/icons/fiolesoso.png" alt="fiole sorciere"></button>
-            <button id="btn-tuer" class="btn-potion" onclick="clickPotionTuer()"><img src="images/icons/fiolesoso.png" alt="fiole sorciere"></button>
-            <br>
-            <button id="btn-rien" class="btn-passer">Ne rien faire</button>
         </div>
-    </div>
-    </div>
-    <!--    fin     -->
-    <!--    popup timer  -->
-    <div id="popup-timer" class="hidden-overlay">
-        <div class="content-timer">
-            <div></div>
+        <!--    fin     -->
+        <!--    popup de vote-->
+        <div class="pop-up-vote hidden-simple">
+            <h3>Recapitulatif des votes</h3>
+            <div class="emplacement-vote"></div>
+        </div>
+    
+        <!--    popup timer  -->
+        <div id="popup-timer" class="hidden-overlay">
+            <div class="content-timer">
+                <div></div>
+                <div>
+                    <p id="message-timer"></p>
+                </div>
+            </div>
+        </div>
+        <!--    fin     -->
+                <!--    popup mort  -->
+        <div id="popup-mort" class="pop-up hidden-overlay">
             <div>
-                <p id="message-timer"></p>
+                <p id="message-mort"></p>
             </div>
         </div>
-    </div>
-    <!--    fin     -->
-            <!--    popup mort  -->
-    <div id="popup-mort" class="pop-up hidden-overlay">
-        <div>
-            <p id="message-mort"></p>
-        </div>
-    </div>
-    <!--    fin     -->
+        <!--    fin     -->
 
-     <!--     fin du jeu    -->
-    <div id="game-over" class="pop-up hidden-overlay">
-        <div class="pop-up-end-game bleu">
-            <span class="over"></span>
-        </div>
-    </div>
-    <!--        dashboard du parametre du jeu   -->
-    <div id="parametre-role" class="wrapper-parameter  hidden-simple">
-        <div class="nombrePlayers"> 
-            <p>Nombres de joueurs</p>
-            <div class="select-number-players">
-                <button onclick="prec()"><</button>
-                <span id="precNumber"></span>
-                <div id="nowNumber"></div>
-                <span id="nextNumber"></span>
-                <button onclick="next()">></button>
-            </div>
-            <span></span>
-        </div>
-        <div id="composition">
-            <p><strong>composition</strong></p>
-            <div id="composition-role">
+        <!--     fin du jeu    -->
+        <div id="game-over" class="pop-up hidden-overlay">
+            <div class="pop-up-end-game bleu">
+                <span class="over"></span>
             </div>
         </div>
-    </div>
 
+        <!--        dashboard du parametre du jeu   -->
+        <div id="parametre-role" class="wrapper-parameter  hidden-simple">
+            <div class="nombrePlayers"> 
+                <p>Nombres de joueurs</p>
+                <div class="select-number-players">
+                    <button onclick="prec()"><</button>
+                    <span id="precNumber"></span>
+                    <div id="nowNumber"></div>
+                    <span id="nextNumber"></span>
+                    <button onclick="next()">></button>
+                </div>
+                <span></span>
+            </div>
+            <div id="composition">
+                <p><strong>composition</strong></p>
+                <div id="composition-role">
+                </div>
+            </div>
+        </div>
+    
     </div>
 
 
@@ -199,7 +221,7 @@
      <!-- template pour message de choix --->
     <template id="template-eliminate-candidate">
         <div id="eliminate-candidate" >
-            <span>Eliminer un candidat</span>
+            <span id="titreChoixDuMaire">Eliminez un candidat</span>
             <div class="list-perso">
           <!--      <div class="candidate"> <div class="icon-perso"></div> <span>roro</span></div>-->
             </div>
@@ -242,5 +264,6 @@
 <script src="js.js"></script>
 <script src="client.js"></script>
 <script src="dataClient.js"></script>
+<script src="audio.js"></script>
 </body>
 </html>

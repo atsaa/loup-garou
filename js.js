@@ -5,12 +5,14 @@ const ecranAccueil = document.getElementById('Accueil');
 var ecranJeu = document.getElementById('salle-game');
 let game_active=document.querySelector('#salle-de-jeu-active');
 let salle_attente = document.querySelector('#salle-attente-game');
-
-const sons = {
-            wolf: new Audio("music/wolf.mp3"),
-            };
-
-
+const perso = document.getElementById("persoAcceuil");
+const ASSETPERSO = 'images/characters/';
+const persosIcon = [ASSETPERSO+'default.png',ASSETPERSO+'fille.png',ASSETPERSO+'fille2.png',
+    ASSETPERSO+'garcon.png',ASSETPERSO+'fille3.png',ASSETPERSO+'garcon2.png',
+    ASSETPERSO+'garcon3.png',
+];
+let myIconPerso;
+let currentItem = 0;
 const DUREE_PHASE = 1200; // 2 minutes en millisecondes
 let showRoleCarte = null;
 let showVoteDuVillage = null
@@ -87,12 +89,54 @@ function changeSalle(){
     sectionRole();
 }
 
+function prechargeVoisins(indexActuel, tableau) {
+    const suivant = (indexActuel + 1) % tableau.length;
+    const precedent = (indexActuel - 1 + tableau.length) % tableau.length;
+
+    // On ne télécharge que ces deux-là en "fantôme"
+    new Image().src = tableau[suivant];
+    new Image().src = tableau[precedent];
+    console.log("est",tableau[suivant]);
+}
+function precPerso(){
+    currentItem = (currentItem - 1 + persosIcon.length) %persosIcon.length;
+    myIconPerso = persosIcon[currentItem];
+    perso.style.backgroundImage = `url(${myIconPerso})`;
+    localStorage.setItem("myIconPerso",JSON.stringify({icon:myIconPerso, index:currentItem}));
+    prechargeVoisins(currentItem, persosIcon);
+}
+function nextPerso(){
+
+    currentItem = (currentItem +1) %persosIcon.length;
+    myIconPerso = persosIcon[currentItem];
+    perso.style.backgroundImage = `url(${myIconPerso})`;
+    localStorage.setItem("myIconPerso",JSON.stringify({icon:myIconPerso, index:currentItem}));
+    prechargeVoisins(currentItem, persosIcon);
+}
+
+function IconPersoAcceuil(){
+    prechargeVoisins(currentItem, persosIcon);
+    const iconPerso = JSON.parse(localStorage.getItem('myIconPerso'));
+    if (iconPerso)
+    {
+        currentItem = iconPerso.index;
+        myIconPerso = iconPerso.icon;
+    }
+    else
+    {
+        localStorage.setItem("myIconPerso",JSON.stringify({icon:persosIcon[0], index:0}))
+        myIconPerso = persosIcon[0];
+    }
+    perso.style.backgroundImage = `url(${myIconPerso})`;
+}
+
 // Cette fonction décide quelle div afficher
 function gererRouteURL() {
     const hash = window.location.hash;
     if (!localStorage.getItem('NameLoupGarou')) {
         ecranAccueil.style.display = 'block';
         ecranJeu.style.display = 'none';
+        IconPersoAcceuil();
     }
     else
     {
@@ -113,6 +157,7 @@ function gererRouteURL() {
         else {
             ecranAccueil.style.display = 'block';
             ecranJeu.style.display = 'none';
+            IconPersoAcceuil();
         }
    }
 }
@@ -121,8 +166,11 @@ function gererRouteURL() {
 function messagerie_visible(){
     if (messagerie.style.display != 'none')
         messagerie.style.display = 'none';
-    else if (messagerie.style.display == 'none')
+    else if (messagerie.style.display === 'none')
+    {
         messagerie.style.display = 'flex';
+        notifications();
+    }
 }
 
 function creerNouvellePartie() {
@@ -142,7 +190,9 @@ function changeSalleHote(gameId){
     const lienDePartage = window.location.origin + '/#join:' + gameId;
     document.getElementById('lien-a-copier').value = lienDePartage;
     //changeSalle();
-    window.location.href = lienDePartage;
+    console.log('en haut de ');
+    window.location.assign(lienDePartage);
+    console.log('en bas de bas')
     return ;
 }
 
@@ -221,22 +271,29 @@ let choixDuMaireDiv;
 function    show_eliminate_by_maire(data){
     const clone = document.getElementById('template-eliminate-candidate').content.cloneNode(true);   
     const div = clone.firstElementChild;
+    const titre = div.querySelector('#titreChoixDuMaire');
+    console.log(maire, localStorage.getItem('NameLoupGarou'));
+    if (maire !== localStorage.getItem('NameLoupGarou')) {
+        titre.textContent = "Le maire va eliminer un joueur"
+    }
     choixDuMaireDiv = div;
     const list = div.querySelector(".list-perso");
     const candidateForEliminate = data.listeForMaire;
+    const tab = candidateForEliminate;
     for (let index = 0; index < candidateForEliminate.length; index++) {
         const candidate = document.createElement('div');
         candidate.classList.add("candidate");
 
         const iconPerso = document.createElement('div');
         iconPerso.classList.add("icon-perso");
+        iconPerso.style.backgroundImage = `url(${persosIcon[tab[index].icone]})`;
         candidate.appendChild(iconPerso);
         
         const span = document.createElement('span');
-        span.textContent = candidateForEliminate[index];
+        span.textContent = candidateForEliminate[index].name;
         candidate.appendChild(span);
 
-        candidate.dataset.id = candidateForEliminate[index];
+        candidate.dataset.id = candidateForEliminate[index].name;
 
         list.appendChild(candidate);
        // liste_choix[index] = candidate;
@@ -415,7 +472,7 @@ function gererAffichagePhase(newPhase, data) {
         hide_eliminate_by_maire();
     }
     else if (phaseActuelle === "SEEYOURCARD") {
-        document.querySelector("#menu-carte").style.display = 'flex';
+        document.querySelector("#barre-menu").style.display = 'flex';
         hideCarte();
     }
     else if (phaseActuelle === "VOTE_LOUP") {
@@ -444,15 +501,15 @@ function gererAffichagePhase(newPhase, data) {
     
     switch (phaseActuelle) {
         case "VOTE":
-            specialMessage("vote", false);
+            logMessageSwitch(TypeMessage.SPECIAL, "vote", undefined, undefined, false);
             show_vote("VILLAGE");
             break;
         case "VOTE_MAIRE":
-            specialMessage("vote du maire", false);
+            logMessageSwitch(TypeMessage.SPECIAL, "vote du Maire", undefined, undefined, false);
             show_vote_chef(data);
             break;
         case "MAIRE_ELIMINE":
-            specialMessage("le maire va eliminer un joueur", false);
+            logMessageSwitch(TypeMessage.SPECIAL, "le maire va eliminer un joueur", undefined, undefined, false);
             show_eliminate_by_maire(data);
             break;
         case "VOTE_LOUP":
@@ -468,10 +525,11 @@ function gererAffichagePhase(newPhase, data) {
             show_vote("SORCIERE");
             break;
         case "TIMER_PHASE":
-            if (data.attribut === ATTRIBUT.SORCIERE)
-                specialMessage("La sorciere va soigner ou empoisonner un joueur",false);
+            console.log("nous somme das timetime",data);
+            if (data.attribut === ATTRIBUT.SORCIERE)            
+                logMessageSwitch(TypeMessage.SPECIAL, "La sorciere va soigner ou empoisonner un joueur", undefined, undefined, false);
             else if(data.attribut === ATTRIBUT.LOUP)
-                specialMessage("Les loups vont devorer un joueur",false);
+                logMessageSwitch(TypeMessage.SPECIAL, "Les loups vont devorer un joueur", undefined, undefined, false);
             show_timer(data);
             break;
         case "MORT_VOTE":
@@ -493,7 +551,7 @@ function show_sorciere(data){
     // On personnalise le message
     if (!data.victime) {
         document.getElementById('btn-sauver').disabled;
-        msg.innerHTML = `personne n'est mort durant la nuit. veux-tu empoisonner un joueur?`;     
+        msg.textContent = `personne n'est mort durant la nuit. veux-tu empoisonner un joueur?`;     
     }
     else{
         msg.innerHTML = `<strong>${data.victime}</strong>. 
@@ -530,12 +588,12 @@ function show_dead(data){
             else
                 message = message + ` est mort durant la nuit`;
             msg.innerHTML = message;
-            specialMessage(message, true);
+            logMessageSwitch(TypeMessage.SPECIAL, message, undefined, undefined, true);
         }
         else{
             const message = "Personne n'est mort durant la nuit";
             msg.innerHTML = message;
-            specialMessage(message, false);
+            logMessageSwitch(TypeMessage.SPECIAL, message, undefined, undefined, true);
         }
     }
     else if (data.phase === "MORT_VOTE") {
@@ -543,12 +601,12 @@ function show_dead(data){
             const message = `<strong>${data.joueurs_mort}</strong> 
             qui etait <strong>${data.roles}</strong> a été éliminé par le village.`;
             msg.innerHTML = message;
-            specialMessage(message, true);
+            logMessageSwitch(TypeMessage.SPECIAL, message, undefined, undefined, true);
         }
         else{
             const message = "Le village n'a sacrifie personne aujourdhui";
             msg.innerHTML = message;
-            specialMessage(message, false);
+            logMessageSwitch(TypeMessage.SPECIAL, message, undefined, undefined, true);
         }
     }
     popup.classList.remove('hidden-overlay');
@@ -597,8 +655,11 @@ function affichePlayer(data){
     for (let index = 0; index < persos.length; index++) {
         const clone = document.getElementById('template-icon-perso').content.cloneNode(true);   
         const div = clone.firstElementChild;
+        const perso = div.querySelector('.icon-perso');
         const span = div.querySelector('span');
-        span.textContent = persos[index];
+        console.log('erreur:', persosIcon[persos[index].icone]);
+        perso.style.backgroundImage = `url(${persosIcon[persos[index].icone]})`
+        span.textContent = persos[index].name;
         list_players[index] = div;
         list.appendChild(div);
     }
@@ -670,4 +731,55 @@ async function copierLien(){
     } catch (err) {
         console.log("Erreur ou annulation : " + err);
     }
+}
+
+function numberOfVotes(list){
+    const votes = document.getElementById('theVotes');
+    const span = votes.querySelector('#listvote');
+    console.log(list);
+    span.textContent = Object.entries(list).length +' / ' +joueurs_en_vie.length;
+    updateTheVote(list);
+}
+
+function updateTheVote(list){
+    const div1 = document.querySelector('.pop-up-vote');
+    const div = div1.querySelector('div');
+    const fragment = document.createDocumentFragment();
+    if (list) {
+        Object.entries(list).forEach(([key, value])=>{
+            const span = document.createElement('li');
+            span.append(spanColor(key,'#ffffff',600));
+            span.append(spanColor(' a voté ', '#99aab5'));
+            span.append(spanColor(value,'#7289da',700));
+            fragment.appendChild(span);
+        });
+        div.replaceChildren(fragment);
+    }
+}
+
+function afficheTheVote(){
+    console.log('ok jai appuyer');
+    const div = document.querySelector('.pop-up-vote');
+    if (div.classList.contains('hidden-simple')){
+        div.classList.add('hidden-anime');
+        div.classList.remove('hidden-simple');
+        //setTimeout(() => {
+            div.classList.remove('hidden-anime');
+      //  }, 1000);
+    }
+    else{
+        div.classList.add('hidden-anime');
+        setTimeout(()=>{
+            div.classList.add('hidden-simple');
+        },500)
+    }
+}
+
+function spanColor(message, color, fontWeight){
+    const span = document.createElement('span');
+    span.textContent = message;
+    span.style.color = color;
+    if (fontWeight) 
+        span.style.fontWeight = fontWeight;
+    return span;
 }

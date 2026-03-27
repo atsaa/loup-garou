@@ -4,13 +4,13 @@ const messageInput = document.getElementById('messageInput');
 var Nombre_de_joeur;
 //const socket = new WebSocket('ws://localhost:8080');
 //const socket = new WebSocket('ws:192.168.197.132:8080');
-const isIp = "192.168.95.132";
-const ip = "ws:192.168.95.132:8080";
+const isIp = "192.168.201.132";
+const ip = "ws:192.168.201.132:8080";
 const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
 || window.location.hostname === isIp;
 
 // On choisit l'URL WebSocket en conséquence
-const socketUrl = isLocal 
+const socketUrl = isLocal
     ? ip
     : window.location.origin.replace(/^http/, 'ws');
 console.log(isLocal, socketUrl);
@@ -23,6 +23,18 @@ let reconnectInterval = undefined;
 let refresh = true;
 let salleCree=false;
 let socket;
+let precMessage = undefined;
+let notificationsNumber = 0;
+let TypeMessage = {
+    CONNEXION:'connexion',
+    SIMPLE:'simple',
+    LOUP:'loup',
+    SPECIAL:'special',
+    VOTE:'vote',
+};
+
+
+
 
 function connecter() {
     if (typeof socket != undefined && socket && socket.readyState === 0) {
@@ -40,9 +52,9 @@ function connecter() {
             console.log(event.data);
             /* A supprimer  */
             if (localStorage.getItem('NameLoupGarou'))
-                logMessage('Connecté au serveur.', 'received', localStorage.getItem('NameLoupGarou'));
+                logMessageSwitch(TypeMessage.CONNEXION,'Connecté au serveur.', localStorage.getItem('NameLoupGarou'));
             else
-                logMessage('Connecté au serveur', 'received', 'none');
+                logMessageSwitch(TypeMessage.CONNEXION,'Connecté au serveur.', 'none');
             refresh = false;
         }
     });
@@ -99,10 +111,10 @@ function connecter() {
             }
             else if(messageData.type === 'MESSAGE'){
                 if (phaseActuelle === 'VOTE_LOUP') {
-                    logMessageLoup(messageData.message, 'received', messageData.name);
+                    logMessageSwitch(TypeMessage.LOUP, messageData.message, messageData.name, messageData);
                 }
                 else
-                    logMessage(messageData.message, 'received', messageData.name);
+                    logMessageSwitch(TypeMessage.SIMPLE, messageData.message, messageData.name, messageData);
             }
             else if (messageData.type === 'PLAYER_DECONNECTE'){
                 ConnectedMessage(messageData.name, false);
@@ -118,11 +130,13 @@ function connecter() {
             }
             else if(messageData.type === 'MY_VOTE_ELIMINATION'){
                 receive_vote(messageData);
-                MessageVote(messageData);
+                logMessageSwitch(TypeMessage.VOTE, undefined, undefined, messageData);
+                console.log(messageData);
+                numberOfVotes(messageData.votes);
             }
             else if(messageData.type === 'MY_VOTE_MAIRE'){
                 receive_vote(messageData);
-                MessageVote(messageData);
+                logMessageSwitch(TypeMessage.VOTE, undefined, undefined, messageData);
             }
             else if (messageData.type === 'SEEYOURCARD' && estEnPartie){
                 phaseActuelle = "SEEYOURCARD";
@@ -134,6 +148,7 @@ function connecter() {
             }
             else if (messageData.type === "CHOIX_MAIRE") {
                 maire = messageData.value;
+                logMessageSwitch(TypeMessage.CONNEXION, messageData.message,messageData.name);
             }
             else if (messageData.type === "TRANSITION" && estEnPartie) {
                 if (messageData.phase !== phaseActuelle)
@@ -165,7 +180,7 @@ function connecter() {
             return;
         }
         else if (event.code === 4002) {
-        //    alert("La partie est deja encours");
+            alert("La partie est deja encours");
             window.location.replace("index.html");
             return;
         }
@@ -271,10 +286,17 @@ function Reconnexion_salle(){
 }
 
 function Rejoindre_salle(gameId){
+    const iconPerso = JSON.parse(localStorage.getItem('myIconPerso'));
+    if (iconPerso)
+    {
+        currentItem = iconPerso.index;
+        myIconPerso = iconPerso.icon;
+    }
     data = {
         type:'REJOINDRE_SALLE',
         gameId:gameId,
         name:localStorage.getItem("NameLoupGarou"),
+        iconPerso:currentItem,
     }
     socket.send(JSON.stringify(data)); 
 }
@@ -288,8 +310,7 @@ function launch(){
 
 function recept_launch_game(data){
     salle_attente.style.display = 'none';
-    sons.wolf.play();
-    sons.wolf.volume = 0.5;
+    audioLancement();
     hideParameter();
     showCarte(data.carte);
     joueurs_en_vie = data.list_players;
@@ -362,16 +383,70 @@ function launch_timer(data){
     msg.innerHTML = ` ${data.attribut}   <strong>${data.timer}</strong>`; 
 }
 
-function logMessage(text, type, name) {
+function logMessageSwitch(type, text, name, data, mortMsg){
+    if (type === TypeMessage.CONNEXION) {
+        logMessageConnexion(text, name);
+    }
+    else{
+        if (type === TypeMessage.VOTE && !data.votes[data.nameVotant])
+            ;
+        else
+            notifications();
+        switch (type) {
+            case TypeMessage.SIMPLE:
+                logMessage(text, name, data.iconPerso);
+                break;
+            case TypeMessage.LOUP:
+                logMessageLoup(text, name, data.iconPerso);
+                break;
+            case TypeMessage.SPECIAL:
+                specialMessage(text, mortMsg);
+                break;
+            case TypeMessage.VOTE:
+                MessageVote(data);
+        }
+    }
+}
+
+
+function logMessageConnexion(text, name){
     const p1= document.createElement('p');
     const p = document.createElement('p');
-    p1.classList.add('usertalk');
+    p1.classList.add('serverTalk');
     p1.textContent = name;
-    p.classList.add(type);
+    p.classList.add('server');
     p.textContent = text;
     messagesDiv.appendChild(p1);
     messagesDiv.appendChild(p);
     messagesDiv.scrollTop = messagesDiv.scrollHeight; // Scroll auto
+}
+
+function logMessage(text, name, iconPerso) {
+    console.log(iconPerso);
+    const contain = document.createElement('div');
+    const montext = document.createElement('div');
+    const perso = document.createElement('div');
+    perso.classList.add('icon-perso');
+    perso.style.position = 'absolute';
+    perso.style.backgroundImage = `url(${persosIcon[iconPerso]})`;
+    contain.classList.add('messagediv');
+    const p1= document.createElement('p');
+    const p = document.createElement('p');
+    p1.classList.add('usertalk');
+    p1.textContent = name;
+    p.classList.add('received');
+    p.textContent = text;
+    if (name !== precMessage) {
+        contain.classList.add('marginText');
+        contain.appendChild(perso);
+        montext.appendChild(p1);
+    }
+    montext.appendChild(p)
+    contain.appendChild(montext);
+    messagesDiv.appendChild(contain);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight; // Scroll auto
+    precMessage = name;
+    notifMessage(name,text)
 }
 
 messagerie.addEventListener('keydown', (event) =>{
@@ -410,14 +485,15 @@ function MessageVote(data){
     }
     else
         newanim.style.animationPlayState ='running';
+    precMessage = undefined // precmessage important pour coller les messages de la mm qui a ecrit
 }
 
-function logMessageLoup(text, type, name){
+function logMessageLoup(text, name, iconPerso){
     const p1= document.createElement('p');
     const p = document.createElement('p');
     p1.classList.add('usertalk');
     p1.textContent = name;
-    p.classList.add(type);
+    p.classList.add('received');
     p.textContent = text;
     const div = document.createElement('div');
     div.appendChild(p1);
@@ -428,19 +504,16 @@ function logMessageLoup(text, type, name){
 
 function ConnectedMessage(name, istrue){
     const div = document.createElement('div');
-    div.style.width ='100%';
-    div.style.fontSize = '12px';
-    div.style.display = 'flex';
-    div.style.justifyContent = 'center';
-    div.style.opacity = 0.7;
+    div.classList.add('connected-message');
     if (istrue) {
-          div.innerHTML = `<p><strong>${name} </strong> a rejoint la partie</p>`;  
+          div.innerHTML = `<span class="connected-icon">»</span><span><strong>${name}</strong> a rejoint la partie</span>`;  
     }
     else{
-        div.innerHTML = `<p>le joueur <strong>${name}</strong>
-        a ete deconnecte de la partie<p>`;
+        div.innerHTML = `<span class="connected-icon">«</span><span><strong>${name}</strong>
+        a quitté la partie<span>`;
     }
     messagesDiv.appendChild(div);
+    precMessage = undefined // precmessage important pour coller les messages de la mm qui a ecrit
 }
 
 function specialMessage(message, messageDeMort){
@@ -461,6 +534,7 @@ function specialMessage(message, messageDeMort){
     else
         p.textContent = "blabalbaslbaslb";
     messagesDiv.appendChild(myDiv);
+    precMessage = undefined // precmessage important pour coller les messages de la mm qui a ecrit
 }
 
 function sendYourVote(my_vote, name){
@@ -505,4 +579,40 @@ function hideParameter(){
     const paraRole = document.getElementById("parametre-role");
     para.classList.add("hidden-overlay");
     paraRole.classList.add("hidden-simple");
+}
+
+
+function notifMessage(name, message){
+    if (messagerie.style.display !== 'none') {
+        return;
+    }
+    const div=document.createElement('div');
+    const span = document.createElement('span');
+    const gras = document.createElement('strong');
+    gras.textContent = name;
+    span.append(gras,`: ${message}`);
+    div.classList.add('notif-message');
+    div.appendChild(span);
+    document.body.appendChild(div);
+    setTimeout(() => {
+        div.classList.add('hidden-anime');
+        setTimeout(() => {
+            div.remove();
+        }, 1000);
+    }, 3000);
+}
+
+function notifications(){
+    const notif = document.getElementById('notification');
+    notificationsNumber+=1;
+    console.log("la notif vaut: ",notificationsNumber);
+    if (messagerie.style.display === 'none' && notificationsNumber > 0) {
+        notif.style.display = 'block';
+        notif.querySelector('span').textContent = notificationsNumber;
+    }
+    else
+    {
+        notif.style.display = 'none';
+        notificationsNumber = 0;
+    }
 }

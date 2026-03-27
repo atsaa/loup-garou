@@ -219,13 +219,11 @@ function diffuserSorciere(roomId, attribut, secondes){
 }
 
 function diffuserMorts(roomId, data){
-  console.log('jsuis entre les morts', data);
   const salle = sallesDeJeu[roomId];
   const message = data;
   salle.joueurs.forEach(function each(client){
   if (client.readyState === WebSocket.OPEN) {
     if (salle.participants[client.name].estMort) { 
-      console.log('jsuis entre les morts', data); 
       client.send(JSON.stringify(message));
       }
     }
@@ -237,9 +235,7 @@ function diffuserLoups(roomId, data){
   const message = data;
   salle.joueurs.forEach(function each(client){
   if (client.readyState === WebSocket.OPEN) {
-    console.log(salle.participants[client.name].role);
     if (salle.participants[client.name].role === ROLE.LOUP) {
-      console.log('jai envoye message lg');  
       client.send(JSON.stringify(message));
       }
     }
@@ -285,7 +281,6 @@ function verifierFinDePartie(roomId){
     let nbVillageois = 0;
 
     salle.joueurs_en_vie.forEach(pseudo => {
-        console.log(pseudo);
         if (salle.participants[pseudo].role === ROLE.LOUP) {
             nbLoups++;
         } else {
@@ -314,7 +309,7 @@ function Deadmanaging(roomId, period, phase, func)
   salle.joueurs_en_vie = salle.joueurs_en_vie.filter(player=> !salle.joueurs_mort.includes(player));
   for (let index = 0; index < salle.joueurs_mort.length; index++) {
     let name = salle.joueurs_mort[index];
-    
+    console.log('joueur choisi est',name);
     salle.participants[name].estMort = true;
     rolesPersos.push(salle.participants[name].attribut);
     if (name === salle.maire) {
@@ -389,11 +384,15 @@ function joueurElimine(roomId, phase){
   else if (winners.length > 1){
     if (phase === PHASE.VOTE && salle.maire) {
       salle.phase = PHASE.MAIRE_ELIMINE;
+      const tableau = Object.entries(salle.participants).filter(([cle])=>winners.includes(cle))
+      .map(([cle, valeur]) => {
+          return { name: cle, icone: valeur.iconPerso};
+      });
       salle.listeForMaire = winners;
       const message = {
         type:salle.period,
         phase:PHASE.MAIRE_ELIMINE,
-        listeForMaire:winners,
+        listeForMaire:tableau,
       }
       diffuser(roomId, message);
     }
@@ -477,18 +476,14 @@ function sendMaire(roomId)
   }
   else
     salle.maire = winners[0];
-  message = {
-    type:"MESSAGE",
-    name:"server",
-    message:`${salle.maire}`+" a été élu Maire",
-  }
   maire = {
     type:"CHOIX_MAIRE",
-    value:salle.maire
+    name:"server",
+    value:salle.maire,
+    message:`${salle.maire}`+" a été élu Maire",
   }
   salle.joueurs.forEach(function each(client){
     if (client.readyState === WebSocket.OPEN) {
-      client.send(JSON.stringify(message));
       client.send(JSON.stringify(maire));
     }
   })
@@ -503,10 +498,10 @@ function etapeJour(roomId)
       lancerTimer(roomId, 2, etapeJour, "JOUR", "VOTE");
       break;
     case PHASE.VOTE_MAIRE:
-      lancerTimer(roomId, 60, etapeJour, "JOUR", "VOTE");
+      lancerTimer(roomId, 6, etapeJour, "JOUR", "VOTE");
       break;
     case PHASE.VOTE:
-      lancerTimer(roomId, 120, PeriodeDuJeu, "NUIT", "ATTENTE");
+      lancerTimer(roomId, 10, PeriodeDuJeu, "NUIT", "ATTENTE");
       break;
     case PHASE.MAIRE_ELIMINE:
       lancerTimer(roomId, 30, PeriodeDuJeu, "NUIT", "ATTENTE");
@@ -585,12 +580,15 @@ function reinitialisationDay(Id){
 }
 
 function diffuserPlayerSalleCount(players, participants, numsPlayersForGame, name) {
+  const tableauMixte = Object.entries(participants).map(([cle, valeur]) => {
+    return { name: cle, icone: valeur.iconPerso};
+  });
   const countMessage = JSON.stringify({
     type: 'CLIENT_COUNT',
     numsPlayersForGame:numsPlayersForGame,
     count: players.size,
     name:name,
-    list_players:Object.keys(participants)
+    list_players:tableauMixte
   });
   players.forEach(client => {
       if (client.readyState === WebSocket.OPEN) {
@@ -641,7 +639,7 @@ wss.on('connection', function connection(ws) {
       if (data.type === 'DEBUT') {
         console.log("connexion sur", data.value);
       }
-      if (data.type === 'CREER_SALLE') {
+      else if (data.type === 'CREER_SALLE') {
           const gameId = genererNouvelIdSalle();
           sallesDeJeu[gameId] = {
             joueurs: new Set(),
@@ -667,7 +665,6 @@ wss.on('connection', function connection(ws) {
             role: null,        // Sera rempli au lancement
             timeoutReconnexion: null // Pour le timer de grâce
           }
-          console.log(sallesDeJeu);
           console.log(`Salle créée : ${gameId}. Le client est ajouté.`);
           ws.send(JSON.stringify({ type: 'SALLE_CREEE', gameId: gameId }));
       }
@@ -688,10 +685,11 @@ wss.on('connection', function connection(ws) {
          console.log('le gameid de rejoindre est', gameId);
           if (salle_Cible) {
             if (salle_Cible.encours) {
+              console.log('salle deja en cours');
               ws.close(4002, "session deja encours");
               return;
             }
-            console.log(salle_Cible.joueurs);
+           // console.log(salle_Cible.joueurs);
             for (let client of salle_Cible.joueurs) {
                   if (client.name === data.name) {
                       console.log('Ce pseudo est deja connecte');
@@ -708,7 +706,8 @@ wss.on('connection', function connection(ws) {
               estConnecte: true,
               estMort: false,
               role: null, 
-              timeoutReconnexion: null 
+              timeoutReconnexion: null,
+              iconPerso:data.iconPerso
             }
             console.log(`Client ajouté à la salle ${gameId}`);
             console.log(Object.keys(salle_Cible.participants))
@@ -754,7 +753,6 @@ wss.on('connection', function connection(ws) {
             sallesDeJeu[ws.gameId].period = "SEEYOURCARD";
             sallesDeJeu[ws.gameId].typeNow = "LAUNCH_GAME";
             PeriodeDuJeu(ws.gameId);
-          console.log(sallesDeJeu[ws.gameId].joueurs.size);
           } 
         }
         catch(e){
@@ -835,7 +833,6 @@ wss.on('connection', function connection(ws) {
         if (ws.gameId && sallesDeJeu[ws.gameId]) {
           const salle = sallesDeJeu[ws.gameId]
           if (salle.maire === ws.name){
-            console.log(data);
             salle.choixDuMaire = data.choice;
             salle.timerSeconds = 1;
           } 
@@ -857,6 +854,7 @@ wss.on('connection', function connection(ws) {
         }
       }
       else if (data.type === "RECONNEXION") {
+        console.log('Dans reconnexion');
         if (!data.gameId || !sallesDeJeu[data.gameId]) {
         console.log('no pourquoi');
           ws.send(JSON.stringify({
@@ -949,11 +947,13 @@ wss.on('connection', function connection(ws) {
       else{
         console.log('Message reçu : %s de la salle', message, ws.gameId);
         if (ws.gameId && sallesDeJeu[ws.gameId]) {
+        //  console.log(sallesDeJeu[ws.gameId].participants);
+          data.iconPerso = sallesDeJeu[ws.gameId].participants[ws.name].iconPerso;
            if (sallesDeJeu[ws.gameId].participants[ws.name].estMort) {
             diffuserMorts(ws.gameId, data);
            }
            else if (sallesDeJeu[ws.gameId].period === 'NUIT') {
-            console.log(sallesDeJeu[ws.gameId].participants[ws.name].role);
+          //  console.log(sallesDeJeu[ws.gameId].participants[ws.name].role);
               if (sallesDeJeu[ws.gameId].phase === PHASE.VOTE_LOUP && sallesDeJeu[ws.gameId].participants[ws.name].role === ROLE.LOUP) {
                 diffuserLoups(ws.gameId, data);
               }
@@ -1020,11 +1020,14 @@ function eliminerDefinitivement(p, roomId){
     salle.joueurs_en_vie = salle.joueurs_en_vie.filter(el=>p.name !== el);
     salle.joueurs_mort = salle.joueurs_mort.filter(el=>p.name !== el);
     delete salle.participants[p.name];
+    const tableauMixte = Object.entries(salle.participants).map(([cle, valeur]) => {
+      return { name: cle, icone: valeur.iconPerso};
+    });
     const message ={
       type:'PLAYER_DECONNECTE',
       name:p.name,
       joueurs_en_vie: salle.joueurs_en_vie,
-      list_players: Object.keys(salle.participants)
+      list_players: tableauMixte
     };
     diffuser(roomId, message);
   }    //broadcastClientCount();
