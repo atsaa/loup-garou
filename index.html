@@ -106,17 +106,18 @@
 
         <!-- popup de la sorciere   -->
         <div id="popup-sorciere" class="pop-up hidden-overlay">
-        <div class="sorciere-card">
-            <div class="content">
-                <p id="message-victime"></p>
+            <div class="sorciere-card">
+                <div class="content">
+                    <p id="message-victime"></p>
+                </div>
+                <div class="actions">
+                    <button id="btn-sauver" class="btn-potion" onclick="clickPotionSauver()"><img src="images/icons/fiolesoso.png" alt="fiole sorciere"></button>
+                    <button id="btn-tuer" class="btn-potion" onclick="clickPotionTuer()"><img src="images/icons/fiolesoso.png" alt="fiole sorciere"></button>
+                    <br>
+                    <button id="btn-rien" class="btn-passer" onclick="neRienFaire()">Ne rien faire</button>
+                </div>
+            <div class="barre-progress"></div>
             </div>
-            <div class="actions">
-                <button id="btn-sauver" class="btn-potion" onclick="clickPotionSauver()"><img src="images/icons/fiolesoso.png" alt="fiole sorciere"></button>
-                <button id="btn-tuer" class="btn-potion" onclick="clickPotionTuer()"><img src="images/icons/fiolesoso.png" alt="fiole sorciere"></button>
-                <br>
-                <button id="btn-rien" class="btn-passer">Ne rien faire</button>
-            </div>
-        </div>
         </div>
         <!--    fin     -->
         <!--    popup de vote-->

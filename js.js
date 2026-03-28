@@ -218,6 +218,9 @@ function showCarte(data){
     else if(donnee.name == 'sorciere') {
         flip_carte.classList.add('role-sorciere')
     }
+    else if (donnee.name === 'voyante') {
+        flip_carte.classList.add('role-voyante');
+    }
     clone.querySelector(".card-name").textContent = donnee.name;
     clone.querySelector(".card-description").textContent = donnee.attribut;
     document.body.appendChild(clone);
@@ -268,7 +271,7 @@ function show_vote_chef(data){
 
 liste_choix = [];
 let choixDuMaireDiv;
-function    show_eliminate_by_maire(data){
+function    show_choice_player(data){
     const clone = document.getElementById('template-eliminate-candidate').content.cloneNode(true);   
     const div = clone.firstElementChild;
     const titre = div.querySelector('#titreChoixDuMaire');
@@ -278,7 +281,7 @@ function    show_eliminate_by_maire(data){
     }
     choixDuMaireDiv = div;
     const list = div.querySelector(".list-perso");
-    const candidateForEliminate = data.listeForMaire;
+    const candidateForEliminate = data.liste;
     const tab = candidateForEliminate;
     for (let index = 0; index < candidateForEliminate.length; index++) {
         const candidate = document.createElement('div');
@@ -298,10 +301,7 @@ function    show_eliminate_by_maire(data){
         list.appendChild(candidate);
        // liste_choix[index] = candidate;
         candidate.onclick = (event)=>{
-            setTimeout(() => {
-                document.querySelector('#eliminate-candidate').classList.remove('waiting');
-            }, 400);
-            send_eliminate_by_maire(candidate.dataset.id);
+            send_choice(candidate.dataset.id);
         };
     }
     ecranJeu.appendChild(div);
@@ -484,6 +484,9 @@ function gererAffichagePhase(newPhase, data) {
     else if (phaseActuelle === "TRANSITION"){
         document.getElementById('transition-overlay').classList.add('hidden-overlay');
     }
+    else if (phaseActuelle === 'VOYANTE') {
+        hide_eliminate_by_maire();
+    }
     else if (phaseActuelle === "SORCIERE"){
         document.getElementById('popup-sorciere').classList.add('hidden-overlay');
     }
@@ -510,13 +513,16 @@ function gererAffichagePhase(newPhase, data) {
             break;
         case "MAIRE_ELIMINE":
             logMessageSwitch(TypeMessage.SPECIAL, "le maire va eliminer un joueur", undefined, undefined, false);
-            show_eliminate_by_maire(data);
+            show_choice_player(data);
             break;
         case "VOTE_LOUP":
             show_vote("LOUP");
             break;
         case "TRANSITION":
             show_transition(data);
+            break;
+        case "VOYANTE":
+            show_choice_player(data);
             break;
         case "SORCIERE":
             show_sorciere(data);

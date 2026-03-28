@@ -154,6 +154,10 @@ function connecter() {
                 if (messageData.phase !== phaseActuelle)
                     gererAffichagePhase(messageData.phase, messageData);
             }
+            else if (messageData.type === "VOYANTE_OBSERVE") {
+                hide_eliminate_by_maire();
+                voyanteLookCard(messageData);
+            }
             else if (messageData.type === 'JOUR' && estEnPartie){
                 PeriodeJour(messageData);
             }
@@ -233,6 +237,9 @@ function PeriodeNuit(data){
     else if (messageData.phase === 'TIMER_PHASE') {
         launch_timer(messageData);
     }
+    else if (messageData.phase === 'VOYANTE') {
+        launch_choix(messageData.timer);
+    }
     phasePeriod = "NUIT";
 }
 
@@ -248,7 +255,7 @@ function PeriodeJour(data){
     else if (messageData.phase === 'VOTE')
         launch_vote(messageData.timer, "VOTE");
     else if (messageData.phase === "MAIRE_ELIMINE") {
-        launch_choix_maire_elimine(messageData.timer);
+        launch_choix(messageData.timer);
     }
     else if (messageData.phase === 'TIMER_PHASE') {
         console.log("timer_phase jour");
@@ -359,9 +366,11 @@ function launch_vote_maire(duree){
     phaseActuelle = "VOTE_MAIRE";
 }
 
-function launch_choix_maire_elimine(duree){
-    document.querySelector(".timerMaire").textContent = duree;
-    phaseActuelle = "MAIRE_ELIMINE";
+function launch_choix(duree){
+    const time = document.querySelector(".timerMaire");
+    if (time) {
+        time.textContent = duree;   
+    }
 }
 
 function launch_vote(duree, phase){
@@ -558,6 +567,28 @@ function sendYourMaireVote(my_vote, name){
     socket.send(JSON.stringify(data));
 }
 
+function send_choice(name){
+    if (phaseActuelle === 'VOYANTE')
+        voyanteSend(name)
+    else
+        send_eliminate_by_maire();
+}
+
+function neRienFaire(){
+    const message = {
+        type:"DO_NOTHING",
+    }
+    socket.send(JSON.stringify(message));   
+}
+
+function voyanteSend(name){
+    const message ={
+        type:'VOYANTE_OBSERVE',
+        name:name
+    }
+    socket.send(JSON.stringify(message));
+}
+
 function send_eliminate_by_maire(choice){
     const message ={
         type:"MAIRE_ELIMINE",
@@ -615,4 +646,20 @@ function notifications(){
         notif.style.display = 'none';
         notificationsNumber = 0;
     }
+}
+function voyanteLookCard(data){
+    const donnee = {
+        name:data.role,
+        attribut:data.name
+    };
+    const carte = document.getElementById('my-carte');
+    carte.style.pointerEvents='none';
+    const message = `Vous avez observe le joueur <strong>${data.name}</strong> qui est
+                    <strong><u>${data.role}</u></strong>`;
+    showCarte(donnee);
+    setTimeout(() => {
+        carte.style.pointerEvents = 'auto';
+        hideCarte();
+    }, 5000);
+    logMessageSwitch(TypeMessage.SPECIAL, message, undefined, undefined, false);
 }
