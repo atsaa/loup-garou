@@ -109,6 +109,9 @@ function algorithmAleatoire(roomId){
     vivi = 2;
   }
   diff = array.length;
+  if (nums === 8) {
+    array.push(datas[0]);
+  }
   for (let index = 0; index < nums - diff; index++) {
     if (vivi == 2) {
       array.push(datas[0])
@@ -600,7 +603,7 @@ function etapeJour(roomId)
       lancerTimer(roomId, 30, PeriodeDuJeu, "NUIT", "ATTENTE");
   }
 }
- 
+
 function etapeNuit(roomId)
 {
   const salle = sallesDeJeu[roomId];
@@ -620,8 +623,8 @@ function etapeNuit(roomId)
             lancerTimer(roomId, 30, PeriodeDuJeu, "JOUR", "TRANSITION_DAY", ROLE.LOUP, ATTRIBUTS.LOUP); // Enchaîne sur la nuit
             break;
         case "SORCIERE":
-          lancerTimer(roomId, 30, PeriodeDuJeu, "JOUR", "TRANSITION_DAY", ROLE.SORCIERE, ATTRIBUTS.SORCIERE);
-          break;
+            lancerTimer(roomId, 30, PeriodeDuJeu, "JOUR", "TRANSITION_DAY", ROLE.SORCIERE, ATTRIBUTS.SORCIERE);
+            break;
     }
 }
 
