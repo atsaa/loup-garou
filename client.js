@@ -146,7 +146,7 @@ function connecter() {
                 show_vote_chef(messageData);
                 receive_vote(messageData);
             }
-            else if (messageData.type === "CHOIX_MAIRE") {
+            else if (messageData.type === "ELU_MAIRE") {
                 maire = messageData.value;
                 logMessageSwitch(TypeMessage.CONNEXION, messageData.message,messageData.name);
             }
@@ -157,6 +157,10 @@ function connecter() {
             else if (messageData.type === "VOYANTE_OBSERVE") {
                 hide_eliminate_by_maire();
                 voyanteLookCard(messageData);
+            }
+            else if (messageData.type === "MORT_BY_CHASSEUR") {
+                hide_eliminate_by_maire();
+                console.log(data);
             }
             else if (messageData.type === 'JOUR' && estEnPartie){
                 PeriodeJour(messageData);
@@ -192,7 +196,7 @@ function connecter() {
         reconnectInterval = setTimeout(() => {
                 console.log("Tentative de reconnexion en cours...");
                 connecter(); // On relance la fonction de base
-            }, 3000); 
+            }, 3000);
     };
     // 4. Événement d'erreur
     socket.addEventListener('error', function (event) {
@@ -255,6 +259,9 @@ function PeriodeJour(data){
     else if (messageData.phase === 'VOTE')
         launch_vote(messageData.timer, "VOTE");
     else if (messageData.phase === "MAIRE_ELIMINE") {
+        launch_choix(messageData.timer);
+    }
+    else if (messageData.phase === "CHASSEUR") {
         launch_choix(messageData.timer);
     }
     else if (messageData.phase === 'TIMER_PHASE') {
@@ -570,6 +577,8 @@ function sendYourMaireVote(my_vote, name){
 function send_choice(name){
     if (phaseActuelle === 'VOYANTE')
         voyanteSend(name)
+    else if (phaseActuelle === 'CHASSEUR')
+        chasseurSend(name);
     else
         send_eliminate_by_maire();
 }
@@ -579,6 +588,14 @@ function neRienFaire(){
         type:"DO_NOTHING",
     }
     socket.send(JSON.stringify(message));   
+}
+
+function chasseurSend(name){
+    const message = {
+        type:'CHASSEUR_TIR',
+        name:name
+    }
+    socket.send(JSON.stringify(message));
 }
 
 function voyanteSend(name){
@@ -653,7 +670,8 @@ function voyanteLookCard(data){
         attribut:data.name
     };
     const carte = document.getElementById('my-carte');
-    carte.style.pointerEvents='none';
+    console.log(carte);
+    carte.style.setProperty('pointer-events', 'none', 'important');
     const message = `Vous avez observe le joueur <strong>${data.name}</strong> qui est
                     <strong><u>${data.role}</u></strong>`;
     showCarte(donnee);

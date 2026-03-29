@@ -7,6 +7,7 @@ const ATTRIBUTS = {
     VOYANTE:'',
     PETITE_FILLE:'',
     CUPIDON:'join deux cartes',
+    CHASSEUR:'',
 }
 const ATTRIBUT = {
     VILLAGEOIS:'villageois',
@@ -15,6 +16,7 @@ const ATTRIBUT = {
     VOYANTE:'voyante',
     PETITE_FILLE:'petite fille',
     CUPIDON:'cupdion',
+    CHASSEUR:'chasseur',
 }
 
 const ROLE = {
@@ -28,6 +30,7 @@ const DESCRIPTION = {
     VOYANTE:"je vois",
     PETITE_FILLE:"La nuit, elle espionne discrètement les Loups-Garous pendant leurs discussions.",
     CUPIDON:"La première nuit, il désigne deux joueurs comme Amoureux. Si l'un d'eux meurt, l'autre le suivra dans sa tombe",
+    CHASSEUR:'chasseur',
 }
 
 class carte {
@@ -56,6 +59,7 @@ const datas = [
     new carte("villageois", ASSET+"/SimpleVillageois.png", ROLE.VILLAGEOIS, ATTRIBUTS.VILLAGEOIS,DESCRIPTION.VILLAGEOIS),
     new carte("sorciere", ASSET+"/Sorciere.png", ROLE.VILLAGEOIS, ATTRIBUTS.SORCIERE,DESCRIPTION.SORCIERE),
     new carte("voyante", ASSET+"/Voyante.png", ROLE.VILLAGEOIS, ATTRIBUTS.VOYANTE,DESCRIPTION.VOYANTE),
+    new carte("chasseur", ASSET+"/Chasseur.png", ROLE.VILLAGEOIS, ATTRIBUTS.CHASSEUR,DESCRIPTION.CHASSEUR),
     new carte("petite fille", ASSET+"/PetiteFille.png", ROLE.VILLAGEOIS, ATTRIBUTS.PETITE_FILLE,DESCRIPTION.PETITE_FILLE),
     new carte("cupidon", ASSET+"/Cupidon.png", ROLE.VILLAGEOIS, ATTRIBUTS.CUPIDON,DESCRIPTION.CUPIDON),
 ];

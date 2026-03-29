@@ -9,7 +9,9 @@ const perso = document.getElementById("persoAcceuil");
 const ASSETPERSO = 'images/characters/';
 const persosIcon = [ASSETPERSO+'default.png',ASSETPERSO+'fille.png',ASSETPERSO+'fille2.png',
     ASSETPERSO+'garcon.png',ASSETPERSO+'fille3.png',ASSETPERSO+'garcon2.png',
-    ASSETPERSO+'garcon3.png',
+    ASSETPERSO+'garcon3.png',ASSETPERSO+'monstre.png',ASSETPERSO+'monstre2.png',
+    ASSETPERSO+'dragon.png',ASSETPERSO+'cyberpunk.png',ASSETPERSO+'dragon2.png',
+    ASSETPERSO+'dragon3.png',ASSETPERSO+'dragon4.png',
 ];
 let myIconPerso;
 let currentItem = 0;
@@ -221,6 +223,9 @@ function showCarte(data){
     else if (donnee.name === 'voyante') {
         flip_carte.classList.add('role-voyante');
     }
+    else if (donnee.name === 'chasseur') {
+        flip_carte.classList.add('role-chasseur');
+    }
     clone.querySelector(".card-name").textContent = donnee.name;
     clone.querySelector(".card-description").textContent = donnee.attribut;
     document.body.appendChild(clone);
@@ -276,8 +281,14 @@ function    show_choice_player(data){
     const div = clone.firstElementChild;
     const titre = div.querySelector('#titreChoixDuMaire');
     console.log(maire, localStorage.getItem('NameLoupGarou'));
-    if (maire !== localStorage.getItem('NameLoupGarou')) {
-        titre.textContent = "Le maire va eliminer un joueur"
+    if (phaseActuelle === 'VOYANTE') {
+        titre.textContent = 'La voyante va regarder un role';
+    }
+    else 
+    {
+        if (maire !== localStorage.getItem('NameLoupGarou')) {
+            titre.textContent = "Le maire va eliminer un joueur"
+        }
     }
     choixDuMaireDiv = div;
     const list = div.querySelector(".list-perso");
@@ -487,6 +498,9 @@ function gererAffichagePhase(newPhase, data) {
     else if (phaseActuelle === 'VOYANTE') {
         hide_eliminate_by_maire();
     }
+    else if (phaseActuelle === 'CHASSEUR') {
+        hide_eliminate_by_maire();
+    }
     else if (phaseActuelle === "SORCIERE"){
         document.getElementById('popup-sorciere').classList.add('hidden-overlay');
     }
@@ -524,6 +538,9 @@ function gererAffichagePhase(newPhase, data) {
         case "VOYANTE":
             show_choice_player(data);
             break;
+        case "CHASSEUR":
+            show_choice_player(data);
+            break;
         case "SORCIERE":
             show_sorciere(data);
             break;
@@ -544,8 +561,15 @@ function gererAffichagePhase(newPhase, data) {
         case "MORT_NUIT":
             show_dead(data);
             break;
+        case "MORT_BY_CHASSEUR":
+            show_dead(data);
+            break;
         case "GAME_OVER":
             gameOver(data);
+            break;
+        case "TRANSITION_DAY":
+            console.log('ok mon ami');
+            audioMorning();
             break;
     }
 }
@@ -615,6 +639,11 @@ function show_dead(data){
             logMessageSwitch(TypeMessage.SPECIAL, message, undefined, undefined, true);
         }
     }
+    else if (data.phase === "MORT_BY_VOTE") {
+        const message = `<strong>${data.joueurs_mort}</strong> 
+            qui etait <strong>${data.roles}</strong> a été tué par le chasseur.`;
+        logMessageSwitch(TypeMessage.SPECIAL, message, undefined, undefined, true);
+    }
     popup.classList.remove('hidden-overlay');
 }
 
@@ -653,6 +682,10 @@ function AffichegameOver(data){
 
 list_players=[];
 function affichePlayer(data){
+    const myName = localStorage.getItem("NameLoupGarou");
+    if (myName === data.hote) {
+        document.getElementById('start').classList.remove('hidden-overlay');
+    }
     const span_nums = document.getElementById('usersalle-nums');
     const list = document.getElementById('perso-grid');
     const persos = data.list_players;
@@ -661,6 +694,11 @@ function affichePlayer(data){
     for (let index = 0; index < persos.length; index++) {
         const clone = document.getElementById('template-icon-perso').content.cloneNode(true);   
         const div = clone.firstElementChild;
+        if(persos[index].name === data.hote){
+            const hote = document.createElement('div'); 
+            hote.textContent = '👑';
+            div.prepend(hote);
+        }
         const perso = div.querySelector('.icon-perso');
         const span = div.querySelector('span');
         console.log('erreur:', persosIcon[persos[index].icone]);

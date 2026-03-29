@@ -46,7 +46,7 @@
                     <h5>Nombre de joueur connecté.. </h5>
                     <p id="numsPlayersConnected"> 0</p>
                 </div>
-                <button id="start" onclick="launch_game()">Lancer</button>
+                <button id="start" class="hidden-overlay" onclick="launch_game()">Lancer</button>
             </div>
             <input type="text" id="lien-a-copier" readonly>
             <button onclick="copierLien()">Copier le lien</button>
@@ -187,7 +187,7 @@
         <template id="template-icon-perso">
             <div>
                 <div class="icon-perso"></div>
-                <span></span>
+                <span class="perso-span"></span>
             </div>
         </template>
 

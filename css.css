@@ -26,8 +26,9 @@ input, button, select, textarea {
 
 /*  design des pseudos*/
 #usersalle{
-    padding: 20px;
+    padding: 10px;
     color: white;
+    text-align: center;
 }
 
 #perso-grid{
@@ -35,14 +36,24 @@ input, button, select, textarea {
     flex-wrap: wrap;
     gap: 10px;
     justify-content: center;
-    align-items: center;
-    padding: 10px;
+    align-items:end;
+    padding: 0px 10px 10px 10px;
+    max-height: 250px;
+    overflow-y: auto;
 }
 #perso-grid>div{
     display: flex;
     flex-direction: column;
     align-items: center;
 }
+
+.perso-span{
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 150px;
+}
+
 /*      section sur la dispostion des persos et des roles*/
 .wrapper-parameter{
     top: 60px;
@@ -692,6 +703,9 @@ img{
 .role-sorciere{
     background-image:url('images/Cartes/Sorciere.png');
 }
+.role-chasseur{
+    background-image:url('images/Cartes/Chasseur.png');
+}
 
 .icon-fille{
     background-image: url(images/characters/fille.png);
@@ -1213,7 +1227,7 @@ img{
     }
     #start{
         position: absolute;
-        bottom: 150px;
+        bottom: 100px;
         height: 50px;
         z-index: 0;
         left: 50%;
