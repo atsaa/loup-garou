@@ -23,7 +23,10 @@ input, button, select, textarea {
     --animation:cubic-bezier(0.215, 0.610, 0.355, 1);
     --size-icon-message:40px;
 }
-
+.center{
+    display: flex;
+    align-items: center;
+}
 /*  design des pseudos*/
 #usersalle{
     padding: 10px;

@@ -1,3 +1,14 @@
+const express = require('express');
+const compression = require('compression'); // Pour réduire le poids (1.4MB -> 300KB)
+const app = express();
+
+/*          j'ai rajoute la ligne du dessus pour compresser */
+
+
+
+
+
+
 
 
 /*  connexion et autorisation au serveur render.com */
@@ -17,17 +28,31 @@ const { type } = require('os');
 //const client = require('firebase-tools');
 // Crée un serveur WebSocket sur le port 8080
 
-//definir le port dynamique de render
+
+// A. ACTIVER LA COMPRESSION (Indispensable pour la vitesse)
+app.use(compression());
+
+// B. GERER LE CACHE (Pour que le transfert tombe à 0 la 2ème fois)
+// On suppose que tes images/js sont dans un dossier nommé 'public'
+app.use(express.static('public', {
+  maxAge: '1y' 
+}));
+
+// C. TA ROUTE PRINCIPALE
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+/*            j'ai ajoute la ligne d'en haut commencant par A. ACTIVER LA COMPRESSION je peux supprimer si je veux*/ 
+
+
 const PORT = process.env.port || 8080;
 
 // 1. Créer le serveur qui envoie ton HTML/JS aux joueurs
 const server = http.createServer((req, res) => {
-    // Si tu as un dossier "public", ajuste le chemin ici
     let filePath = '.' + req.url;
     if (filePath === './') filePath = './index.html';
     
     const extname = path.extname(filePath);
-    // Dictionnaire des types MIME
     let contentType = 'text/html';
     switch (extname) {
         case '.js': contentType = 'text/javascript'; break;
