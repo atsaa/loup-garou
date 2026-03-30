@@ -778,6 +778,7 @@ function genererNouvelIdSalle() {
 
 wss.on('connection', function connection(ws) {
   console.log('Un nouveau client est connecté.', wss.clients.size);
+  ws.id = Date.now() + "_" + Math.random().toString(36).substr(2, 9);
   //broadcastClientCount();
 
   // Écoute les messages envoyés par ce client spécifique
@@ -843,8 +844,10 @@ wss.on('connection', function connection(ws) {
             for (let client of salle_Cible.joueurs) {
                   if (client.name === data.name) {
                       console.log('Ce pseudo est deja connecte');
-                      ws.close(4001, "Une seule session autorisée en jeu.");
-                      return;
+                      const joueur = salle_Cible.participants[client.name];
+                      joueur.ws.reconnexion = true;
+                      joueur.ws.close(4001, "Une seule session autorisée");
+                      break;
                   }
             }
             ws.gameId = gameId;
@@ -1112,6 +1115,7 @@ wss.on('connection', function connection(ws) {
         }
       }
       else{
+        console.log(sallesDeJeu[ws.gameId].joueurs);
         console.log('Message reçu : %s de la salle', message, ws.gameId);
         if (ws.gameId && sallesDeJeu[ws.gameId]) {
         //  console.log(sallesDeJeu[ws.gameId].participants);
@@ -1162,8 +1166,9 @@ ws.on('close', (code) => {
     const joueur = salle.participants[name];
     if (!joueur) return;
     if (code === 1000 || !salle.encours) { // le joueur quitte volentairement la salle genre il supprime la page
-        console.log(`${name} a quitté proprement.`);
-        eliminerDefinitivement(joueur, roomId);
+        console.log(`${name} a quitté proprement.`, ws.reconnexion, joueur.ws.reconnexion);
+        if (!ws.reconnexion)
+          eliminerDefinitivement(joueur, roomId);
     }
     else {
         joueur.estFantome = true;
