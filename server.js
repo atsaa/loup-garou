@@ -1,6 +1,3 @@
-const express = require('express');
-const compression = require('compression'); // Pour réduire le poids (1.4MB -> 300KB)
-const app = express();
 
 /*          j'ai rajoute la ligne du dessus pour compresser */
 
@@ -27,23 +24,6 @@ const { type } = require('os');
 //const { cli } = require('firebase-tools');
 //const client = require('firebase-tools');
 // Crée un serveur WebSocket sur le port 8080
-
-
-// A. ACTIVER LA COMPRESSION (Indispensable pour la vitesse)
-app.use(compression());
-
-// B. GERER LE CACHE (Pour que le transfert tombe à 0 la 2ème fois)
-// On suppose que tes images/js sont dans un dossier nommé 'public'
-app.use(express.static('public', {
-  maxAge: '1y' 
-}));
-
-// C. TA ROUTE PRINCIPALE
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-/*            j'ai ajoute la ligne d'en haut commencant par A. ACTIVER LA COMPRESSION je peux supprimer si je veux*/ 
-
 
 const PORT = process.env.port || 8080;
 

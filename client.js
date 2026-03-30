@@ -182,6 +182,11 @@ function connecter() {
     });
     socket.onclose = (event) => {
         console.log(event.code);
+        if (event.code <= 3000) {
+            alert("une erreur est survenue");
+            window.location.replace("index.html");
+            return;
+        }
         if (event.code === 4001) {
         //    alert("La partie est en cours, vous ne pouvez pas avoir deux onglets !");
             window.location.replace("index.html"); 
