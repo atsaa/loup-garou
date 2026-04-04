@@ -673,7 +673,7 @@ function voyanteSend(name){
 
 function send_eliminate_by_maire(choice){
     const message ={
-        type:"MAIRE_ELIMINE",
+        type:"CHOIX_MAIRE",
         choice:choice,
     }
     socket.send(JSON.stringify(message));
