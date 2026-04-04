@@ -1,3 +1,6 @@
+const express = require('express');
+const compression = require('compression'); // Pour réduire le poids (1.4MB -> 300KB)
+const app = express();
 
 /*          j'ai rajoute la ligne du dessus pour compresser */
 
@@ -24,6 +27,23 @@ const { type } = require('os');
 //const { cli } = require('firebase-tools');
 //const client = require('firebase-tools');
 // Crée un serveur WebSocket sur le port 8080
+
+
+// A. ACTIVER LA COMPRESSION (Indispensable pour la vitesse)
+app.use(compression());
+
+// B. GERER LE CACHE (Pour que le transfert tombe à 0 la 2ème fois)
+// On suppose que tes images/js sont dans un dossier nommé 'public'
+app.use(express.static('/images', {
+  maxAge: '60d' ,
+  immutable: true
+}));
+
+// C. TA ROUTE PRINCIPALE
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+/*            j'ai ajoute la ligne d'en haut commencant par A. ACTIVER LA COMPRESSION je peux supprimer si je veux*/ 
 
 const PORT = process.env.port || 8080;
 
@@ -111,11 +131,13 @@ function algorithmAleatoire(roomId){
   const salle = sallesDeJeu[roomId];
   nums = salle.joueurs.size;
   array = [];
-  array.push(datas[2]);
-  vivi = 1;
+  array.push(datas[2]);//sorciere
+  array.push(datas[4]);//chasseur
+  vivi = 2;
   if (nums >= 6) {
     array.push(datas[3]);
-    vivi = 2;
+    array.push(datas[0]);
+    vivi = 1;
   }
   diff = array.length;
   if (nums === 8) {
@@ -220,7 +242,6 @@ function chasseurVaTirer(roomId, chasseur){
     phase:PHASE.CHASSEUR,
     liste:tableau
   }
-  console.log('dans chasseurVaTirer phase is', salle.phase);
   salle.participants[chasseur].ws.send(JSON.stringify(message));
   etapeJour(roomId);
 }
@@ -229,8 +250,6 @@ function voyanteRegarde(ws, roomId, name){
   const salle = sallesDeJeu[roomId];
   //verifier si le nom fait parti des vivants
   if (salle.joueurs_en_vie.includes(name)){
-    console.log('dedans');
-    console.log(salle.participants[name]);
     const attributPlayer = salle.participants[name].attribut;
     const message = {
       type:"VOYANTE_OBSERVE",
@@ -349,7 +368,6 @@ function diffuserLoups(roomId, data){
 }
 
 function diffuserTimer(idSalle, secondes, role, attribut) {
-    console.log('roomId', idSalle,attribut);
     const salle = sallesDeJeu[idSalle];
     if (!salle) return;
     const message = {
@@ -364,7 +382,6 @@ function diffuserTimer(idSalle, secondes, role, attribut) {
         attribut:attribut,
         timer: secondes
     };
-    console.log(salle.phase);
     if (attribut === ATTRIBUTS.SORCIERE){
       diffuserSorciere(idSalle, attribut, secondes);
       return ;
@@ -534,7 +551,6 @@ function finPhase(roomId, func, period, phase) {
   const salle = sallesDeJeu[roomId];
   if (salle.phase === 'ATTENTE') {
     if (PhaseSuivanteDeNuit(roomId)) {
-      console.log(salle.phase);
       func(roomId);
       return ;
     }
@@ -564,7 +580,6 @@ function finPhase(roomId, func, period, phase) {
   }
   else if (salle.period === "JOUR" && salle.phase === PHASE.CHASSEUR) {
     joueurElimineByChasseur(roomId);
-    console.log(salle);
     Deadmanaging(roomId, salle.periodSuivante, salle.phaseSuivante, func);
     return ;
   }
@@ -595,7 +610,6 @@ function finPhase(roomId, func, period, phase) {
 function lancerTimer(roomId, timer, func, period, phase, role, attribut) {
     const salle = sallesDeJeu[roomId];
     salle.timerSeconds = timer;
-    console.log("jsuis dans lancerTimer ",salle.phase, attribut, salle.timerSeconds);
     salle.interval = setInterval(() => {
         salle.timerSeconds--;
         diffuserTimer(roomId, salle.timerSeconds, role, attribut);
@@ -638,7 +652,7 @@ function etapeJour(roomId)
   salle.typeNow = 'JOUR';
   switch (salle.phase) {
     case 'TRANSITION_DAY':
-      lancerTimer(roomId, 2, etapeJour, "JOUR", "VOTE");
+      lancerTimer(roomId, 3, etapeJour, "JOUR", "VOTE");
       break;
     case PHASE.VOTE_MAIRE:
       lancerTimer(roomId, 60, etapeJour, "JOUR", "VOTE");
@@ -851,6 +865,7 @@ wss.on('connection', function connection(ws) {
                       console.log('Ce pseudo est deja connecte');
                       const joueur = salle_Cible.participants[client.name];
                       joueur.ws.reconnexion = true;
+                      joueur.ws.send(JSON.stringify({type:"DECONNEXION"}));
                       joueur.ws.close(4001, "Une seule session autorisée");
                       break;
                   }

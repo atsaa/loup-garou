@@ -135,6 +135,7 @@ function IconPersoAcceuil(){
 // Cette fonction décide quelle div afficher
 function gererRouteURL() {
     const hash = window.location.hash;
+    defaultVolumeFunc();
     if (!localStorage.getItem('NameLoupGarou')) {
         ecranAccueil.style.display = 'block';
         ecranJeu.style.display = 'none';
@@ -245,7 +246,7 @@ function show_vote_chef(data){
     const candidateForMayor = data.list ? data.list:[];
     const wrapper_vote_village = document.querySelector(".wrapper-vote-village");
     
-    if (!candidateForMayor.includes(name)) {
+    if (!candidateForMayor.includes(name) && !youAreDied) {
         wrapper_vote_village.querySelector('#candidateMaire').classList.remove('hidden-overlay');
     }
     
@@ -259,8 +260,11 @@ function show_vote_chef(data){
         const clone = document.getElementById('template-vote-du-village').content.cloneNode(true);   
         const li = clone.firstElementChild;
         li.classList.add("li-chef");
+        if (youAreDied) {
+            li.classList.add("waiting");
+        }
         li.dataset.id = candidateForMayor[index];
-        liste_joueurs[index] = li;        
+        liste_joueurs[index] = li;
         liste_joueurs[index].querySelector(".name").textContent = candidateForMayor[index];
         liste_joueurs[index].querySelector(".votes").textContent = "0";
         li.onclick = (event)=>{
@@ -417,6 +421,9 @@ function show_vote(value){
             div.classList.add("maire");
         }
         li.classList.add("li-vote-village");
+        if (youAreDied) {
+            li.classList.add("waiting");
+        }
         li.dataset.id = joueurs_en_vie[index];
         liste_joueurs[index] = li;
         liste_joueurs[index].querySelector(".name").textContent = joueurs_en_vie[index];
@@ -513,7 +520,9 @@ function gererAffichagePhase(newPhase, data) {
     else if (phaseActuelle === 'MORT_NUIT') {
         document.getElementById('popup-mort').classList.add('hidden-overlay');
     }
-    
+    else if (phaseActuelle === 'MORT_BY_CHASSEUR') {
+        document.getElementById('popup-mort').classList.add('hidden-overlay');        
+    }
     phaseActuelle = newPhase;
     
     switch (phaseActuelle) {
@@ -604,6 +613,8 @@ function show_dead(data){
     joueurs_en_vie = data.joueurs_en_vie;
     const popup = document.getElementById('popup-mort');
     const msg = document.getElementById('message-mort');
+    if (!youAreDied)
+        youAreDied = data.joueurs_mort.includes(localStorage.getItem('NameLoupGarou'));
     // On personnalise le message
     if (data.phase === "MORT_NUIT") {
         if (data.joueurs_mort.length){
@@ -639,10 +650,19 @@ function show_dead(data){
             logMessageSwitch(TypeMessage.SPECIAL, message, undefined, undefined, true);
         }
     }
-    else if (data.phase === "MORT_BY_VOTE") {
+    else if (data.phase === "MORT_BY_CHASSEUR") {
+        if (data.joueurs_mort.length){
+        audioChasseur();
         const message = `<strong>${data.joueurs_mort}</strong> 
             qui etait <strong>${data.roles}</strong> a été tué par le chasseur.`;
-        logMessageSwitch(TypeMessage.SPECIAL, message, undefined, undefined, true);
+        logMessageSwitch(TypeMessage.SPECIAL, message, undefined, undefined, true);    
+        msg.innerHTML = message;
+        }
+        else{
+            const message = `chasseur n'a visé personne`;
+            logMessageSwitch(TypeMessage.SPECIAL, message, undefined, undefined, false);
+            msg.innerHTML = message;
+        }
     }
     popup.classList.remove('hidden-overlay');
 }
@@ -717,6 +737,25 @@ function hideAffichePlayer(){
         });
         list_players.length = 0;
    }
+}
+
+function show_information(image, message){
+    const templateInfo = document.getElementById("template-information").content.cloneNode(true);
+    const info = templateInfo.firstElementChild;
+    const div = info.querySelector('.information-icon');
+    const span = info.querySelector('#text-information');
+    console.log(info);
+    console.log(span);
+    console.log(div);
+    span.innerHTML = message;
+    div.backgroundImage = `url("${image}")`;
+    ecranJeu.appendChild(info);
+}
+
+function hide_information(){
+    const info = document.querySelector('#information');
+    if (info)
+        info.remove();   
 }
 
 /*function hideChargement(){

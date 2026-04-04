@@ -58,10 +58,15 @@
             </div>
         </div>
         <div class="wrapper-messagerie">
-            <div id="messagerie" style="display: none;"  tabindex="0">
+            <div id="messagerie"  tabindex="0" style="display: none;">
                 <div id="messages"></div>
+                <div class="space"></div>
+                <div class="reference hidden-overlay" >
+                    <span>roro</span>
+                    <button onclick="hide_reference()">X</button>
+                </div>
                 <div class="input-area">
-                    <input type="text" id="messageInput" placeholder="Ecrire votre message...">
+                    <input type="text" autocomplete="off" id="messageInput" placeholder="Ecrire votre message...">
                     <button id="send-button" n onclick="sendMessage()">
                         <img src="images/icons/send.png" alt="send">
                     </button>
@@ -152,7 +157,7 @@
         </div>
 
         <!--        dashboard du parametre du jeu   -->
-        <div id="parametre-role" class="wrapper-parameter  ">
+        <div id="parametre-role" class="wrapper-parameter hidden-simple">
             <div class="center"><span>volume </span>
                 <input type="range" class="volume-bar">
             </div>
@@ -247,7 +252,14 @@
                 </div>
             </div>
         </template>
-
+<!--    template pour les informations genre voyante etc...    -->
+    <template id="template-information">
+        <div id="information">
+            <div> <span id="text-information"></span></div>
+            <div class="information-icon"></div>
+            <button onclick="hide_information()">Se rendormir</button>
+        </div>
+    </template>
 
 <!--        template pour les roles des personnages -->
     <template id="template-role">

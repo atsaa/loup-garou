@@ -1,11 +1,12 @@
 const messagerie = document.getElementById('messagerie');
 const messagesDiv = document.getElementById('messages');
 const messageInput = document.getElementById('messageInput');
+let reference = undefined;
 var Nombre_de_joeur;
 //const socket = new WebSocket('ws://localhost:8080');
 //const socket = new WebSocket('ws:192.168.197.132:8080');
-const isIp = "192.168.201.132";
-const ip = "ws:192.168.201.132:8080";
+const isIp = "192.168.1.107";
+const ip = "ws:192.168.1.107:8080";
 const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
 || window.location.hostname === isIp;
 
@@ -25,6 +26,8 @@ let salleCree=false;
 let socket;
 let precMessage = undefined;
 let notificationsNumber = 0;
+let deconnexion = false;
+let youAreDied = false;
 let TypeMessage = {
     CONNEXION:'connexion',
     SIMPLE:'simple',
@@ -32,8 +35,6 @@ let TypeMessage = {
     SPECIAL:'special',
     VOTE:'vote',
 };
-
-
 
 
 function connecter() {
@@ -64,6 +65,9 @@ function connecter() {
             const messageData = JSON.parse(event.data);
             if (messageData.type === "ROOMID_DOESNT_EXIST") {
                 localStorage.removeItem("roomId");
+            }
+            else if (messageData.type === 'DECONNEXION') {
+                deconnexion = true;
             }
             else if(messageData.type === "CODE_CORRECT"){
                 if (localStorage.getItem("roomId"))
@@ -158,10 +162,6 @@ function connecter() {
                 hide_eliminate_by_maire();
                 voyanteLookCard(messageData);
             }
-            else if (messageData.type === "MORT_BY_CHASSEUR") {
-                hide_eliminate_by_maire();
-                console.log(data);
-            }
             else if (messageData.type === 'JOUR' && estEnPartie){
                 PeriodeJour(messageData);
             }
@@ -182,7 +182,7 @@ function connecter() {
     });
     socket.onclose = (event) => {
         console.log(event.code);
-        if (event.code <= 3000) {
+        if (deconnexion) {
             alert("une erreur est survenue");
             window.location.replace("index.html");
             return;
@@ -277,12 +277,15 @@ function PeriodeJour(data){
 }
 
 // 5. Fonction pour envoyer un message
-function sendMessage() { 
+function sendMessage() {
     message = {
         type:'MESSAGE',
         message:messageInput.value,
         name:localStorage.getItem("NameLoupGarou"),
         }
+    if (reference) {
+        message.reference = reference;
+    }
     if (message.message.trim() !== '') {
         socket.send(JSON.stringify(message)); // Envoie le message au serveur
         messageInput.value = '';
@@ -291,6 +294,7 @@ function sendMessage() {
     window.visualViewport.addEventListener('resize', () => {
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
     });
+    hide_reference();
 }
 
 function Reconnexion_salle(){
@@ -346,6 +350,7 @@ function recept_reprise_game(data){
     console.log(data);
     console.log(joueurs_en_vie);
     maire = data.maire;
+    youAreDied = !data.joueurs_en_vie.includes(localStorage.getItem('NameLoupGarou'));
     if (data.typeNow === 'LAUNCH_GAME'){
         showCarte(data.carte);
     }
@@ -415,7 +420,7 @@ function logMessageSwitch(type, text, name, data, mortMsg){
             notifications();
         switch (type) {
             case TypeMessage.SIMPLE:
-                logMessage(text, name, data.iconPerso);
+                logMessage(text, name, data.iconPerso, data.reference);
                 break;
             case TypeMessage.LOUP:
                 logMessageLoup(text, name, data.iconPerso);
@@ -442,11 +447,37 @@ function logMessageConnexion(text, name){
     messagesDiv.scrollTop = messagesDiv.scrollHeight; // Scroll auto
 }
 
-function logMessage(text, name, iconPerso) {
+function messageReference(ref){
+    const messageRef = document.createElement('div');
+    const barre = document.createElement('div');
+    messageRef.classList.add('refereMessage');
+    const text = document.createElement('div');
+    text.innerHTML = `<strong>@${ref.name}</strong> ${ref.message}`;
+    barre.classList.add('barre-ref');
+    text.classList.add('text-ref');
+    messageRef.appendChild(barre);
+    messageRef.appendChild(text);
+    return messageRef;
+}
+
+function logMessage(text, name, iconPerso, ref) {
+    console.log(joueurs_en_vie);
     console.log(iconPerso);
+    const messageFinal = document.createElement('div');
     const contain = document.createElement('div');
     const montext = document.createElement('div');
     const perso = document.createElement('div');
+    contain.dataset.author = name;
+    if (ref) {
+        divOfMessageComplet = document.createElement('div');
+        precMessage = undefined;
+        console.log(ref);
+        const refMessage = messageReference(ref);
+        messageFinal.appendChild(refMessage);
+    }
+    if (estEnPartie && !joueurs_en_vie.includes(name)) {
+        contain.classList.add('message-mort');
+    }
     perso.classList.add('icon-perso');
     perso.style.position = 'absolute';
     perso.style.backgroundImage = `url(${persosIcon[iconPerso]})`;
@@ -458,13 +489,14 @@ function logMessage(text, name, iconPerso) {
     p.classList.add('received');
     p.textContent = text;
     if (name !== precMessage) {
-        contain.classList.add('marginText');
+        messageFinal.classList.add('marginText');
         contain.appendChild(perso);
         montext.appendChild(p1);
     }
     montext.appendChild(p)
     contain.appendChild(montext);
-    messagesDiv.appendChild(contain);
+    messageFinal.appendChild(contain);
+    messagesDiv.appendChild(messageFinal);
     messagesDiv.scrollTop = messagesDiv.scrollHeight; // Scroll auto
     precMessage = name;
     notifMessage(name,text)
@@ -476,6 +508,34 @@ messagerie.addEventListener('keydown', (event) =>{
         }
     }
 );
+
+document.addEventListener('dblclick',(event)=>{
+    const info = event.target.closest('.messagediv');
+    if (info) {
+        console.log(info);
+        console.log(reference);
+        show_reference(info.dataset.author);
+        const message = info.querySelector('.received');
+        reference = {
+            name : info.dataset.author,
+            message: message?.textContent,
+        }
+    }
+})
+
+function show_reference(value){
+    const ref = document.querySelector('.reference');
+    const span = ref.querySelector('span');
+    span.textContent = `Repondre à ${value}`;
+    ref.classList.remove("hidden-overlay");
+}
+
+function hide_reference(){
+    const ref = document.querySelector('.reference');
+    if (!ref.classList.contains("hidden-overlay"))
+        ref.classList.add("hidden-overlay");
+    reference = undefined;
+}
 
 function MessageVote(data){
     if (!data.votes[data.nameVotant])
@@ -670,19 +730,42 @@ function notifications(){
     }
 }
 function voyanteLookCard(data){
-    const donnee = {
+    /*const donnee = {
         name:data.role,
         attribut:data.name
-    };
+    };*/
     const carte = document.getElementById('my-carte');
     console.log(carte);
     carte.style.setProperty('pointer-events', 'none', 'important');
     const message = `Vous avez observe le joueur <strong>${data.name}</strong> qui est
                     <strong><u>${data.role}</u></strong>`;
-    showCarte(donnee);
+    //showCarte(donnee);
+    let image;
+    if (data.role === ATTRIBUT.CHASSEUR) {
+        image = 'images/Cartes/Cupidon.png';
+    }
+    else if (data.role === ATTRIBUT.CUPIDON) {
+        image = 'images/Cartes/Cupidon.png';
+    }
+    else if (data.role === ATTRIBUT.LOUP) {
+        image = 'images/Cartes/LoupGarou.png';
+    }
+    else if (data.role === ATTRIBUT.PETITE_FILLE){
+        image = 'images/characters/fille.png';
+    }
+    else if (data.role === ATTRIBUT.VILLAGEOIS) {
+        image = 'images/Cartes/SimpleVillageois.png';
+    }
+    else if (data.role === ATTRIBUT.VOYANTE) {
+        image = 'images/Cartes/Voyante.png';
+    }
+    else if (data.role === ATTRIBUT.SORCIERE) {
+        image = 'images/Cartes/Sorciere.png';
+    }
+    show_information(image, message)
     setTimeout(() => {
-        carte.style.pointerEvents = 'auto';
-        hideCarte();
+        hide_information();
+       // hideCarte();
     }, 5000);
     logMessageSwitch(TypeMessage.SPECIAL, message, undefined, undefined, false);
 }

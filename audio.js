@@ -1,9 +1,10 @@
 let audioInitialise = false;
-let defaultSons = JSON.parse(localStorage.getItem("volume"));
-
+let defaultSons = document.querySelector('.volume-bar');
+let defaultVolume = JSON.parse(localStorage.getItem("volume"))/100;
 const sons = {
             wolf: new Audio("music/wolf.mp3"),
             morning: new Audio("music/rooster.mp3"),
+            chasseur: new Audio("music/chasseurTir.mp3"),
             };
 const silencePassePartout = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA");
 
@@ -17,20 +18,23 @@ function debloquerAudio() {
 
 function audioLancement(){
     sons.wolf.play();
-    if (defaultVolume) {
-        sons.wolf.volume = defaultVolume;   
-    }
-    else
-        sons.wolf.volume = 0.5
+        sons.wolf.volume = defaultVolume;
 }
 
 function audioMorning(){
     sons.morning.play();
-    if (defaultVolume) {
         sons.morning.volume = defaultVolume;
-    }
-    else
-        sons.morning.volume = defaultSons;
+}
+
+function audioChasseur(){
+    sons.chasseur.play();
+    sons.chasseur.volume = defaultVolume;
+}
+
+function modifierAudioVolume(value){
+    console.log(value);
+    sons.morning.volume = value;
+    sons.wolf.volume = value;
 }
 
 document.addEventListener('click', debloquerAudio, { once: true });
@@ -39,6 +43,14 @@ const volumeBar = document.querySelector('.volume-bar');
 
 volumeBar.addEventListener('input', (e) => {
   const valeur = e.target.value;
-  console.log("Volume actuel :", valeur);
-  localStorage.setItem("volume",JSON.stringify(valeur));
+  modifierAudioVolume(valeur / 100);
+  localStorage.setItem("volume", JSON.stringify(valeur));
 });
+
+function defaultVolumeFunc(){
+ console.log(defaultVolume);
+    if (defaultVolume)
+        defaultSons.value = defaultVolume*100;
+    else
+        defaultVolume = 0.5;
+}
