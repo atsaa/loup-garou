@@ -34,12 +34,12 @@ app.use(compression());
 
 // B. GERER LE CACHE (Pour que le transfert tombe à 0 la 2ème fois)
 // On suppose que tes images/js sont dans un dossier nommé 'public'
-app.use(express.static('/images', {
+app.use(express.static('/', path.join(__dirname, 'images'), {
   maxAge: '60d' ,
   immutable: true
 }));
 
-app.use(express.static('/music', {
+app.use(express.static('/', path.join(__dirname, 'music'), {
   maxAge: '60d' ,
   immutable: true
 }));
@@ -72,7 +72,7 @@ const server = http.createServer((req, res) => {
             res.end("Fichier non trouvé");
         } else {
             // ✅ On utilise la variable contentType ici !
-    //        res.writeHead(200, { 'Content-Type': contentType });
+            res.writeHead(200, { 'Content-Type': contentType });
             res.end(content, 'utf-8');
         }
     });
