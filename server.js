@@ -39,6 +39,11 @@ app.use(express.static('/images', {
   immutable: true
 }));
 
+app.use(express.static('/music', {
+  maxAge: '60d' ,
+  immutable: true
+}));
+
 // C. TA ROUTE PRINCIPALE
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
@@ -61,7 +66,7 @@ const server = http.createServer((req, res) => {
         case '.png': contentType = 'image/png'; break;
         case '.jpg': contentType = 'image/jpg'; break;
     }
-    fs.readFile(filePath, (error, content) => {
+    /*fs.readFile(filePath, (error, content) => {
         if (error) {
             res.writeHead(404);
             res.end("Fichier non trouvé");
@@ -70,7 +75,7 @@ const server = http.createServer((req, res) => {
             res.writeHead(200, { 'Content-Type': contentType });
             res.end(content, 'utf-8');
         }
-    });
+    });*/
 });
 const wss = new WebSocket.Server({ server });
 
