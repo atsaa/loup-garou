@@ -586,7 +586,6 @@ function gererAffichagePhase(newPhase, data) {
             break;
         case "TRANSITION_DAY":
             console.log('ok mon ami');
-            audioJour();
             break;
     }
 }

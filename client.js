@@ -87,7 +87,6 @@ function connecter() {
             }
             else if (messageData.type === 'CLIENT_COUNT') {
                 console.log(messageData);
-                audioRoom(); 
                 if (!salleCree){
                     changeSalle();
                     numsPlayers = messageData.numsPlayersForGame;
@@ -241,9 +240,6 @@ function PeriodeNuit(data){
     console.log("nuit", messageData.phase, phaseActuelle);
     if (phasePeriod !== "NUIT")
         nightGame();
-    if (messageData.phase === "ATTENTE") {
-        audioNight();
-    }
     if (messageData.phase !== phaseActuelle)
         gererAffichagePhase(messageData.phase, messageData);
     if (messageData.phase === 'VOTE_LOUP')
