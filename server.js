@@ -1007,6 +1007,7 @@ wss.on('connection', function connection(ws) {
           const salle = sallesDeJeu[ws.gameId]
           if (salle.maire === ws.name){
             salle.choixDuMaire = data.choice;
+            console.log(salle.choixDuMaire);
             salle.timerSeconds = 1;
           } 
         }
@@ -1053,17 +1054,28 @@ wss.on('connection', function connection(ws) {
           return;
         }
         console.log('jai traverse');
-        const joueur = sallesDeJeu[data.gameId].participants[data.name];
-        if (joueur && joueur.estFantome) {
-        ws.name = data.name;
-        ws.gameId = data.gameId;
+        const salle = sallesDeJeu[data.gameId];
+        const joueur = salle.participants[data.name];
+        if (joueur)
+        {
+          if (!joueur.estFantome) {
+            salle.joueurs.delete(salle.joueurs.delete(joueur.ws));
+            joueur.ws.gameId = undefined;
+            joueur.ws.send(JSON.stringify({type:"DECONNEXION"}));
+            joueur.ws.close(4001, "Une seule session autorisée");
+          }
+          ws.name = data.name;
+          ws.gameId = data.gameId;
           clearTimeout(joueur.timerGrace); // STOP ! Il est revenu
           joueur.estFantome = false;
           joueur.ws = ws; // On lui donne la nouvelle socket
-          const salle = sallesDeJeu[data.gameId];
           salle.joueurs.add(ws);
           // 🔄 SYNC : On lui renvoie l'état exact du jeu
           const count = countVote(ws.gameId);
+          const choiceTab = Object.entries(salle.participants).filter(([cle])=>salle.joueurs_en_vie.includes(cle))
+                .map(([cle, valeur]) => {
+                      return { name: cle, icone: valeur.iconPerso};
+          });
           const message = {
                 type: "REPRISE",
                 typeNow:salle.typeNow,
@@ -1086,6 +1098,20 @@ wss.on('connection', function connection(ws) {
                   message.phase = "TIMER_PHASE";
                 }
                 break;
+              case "CHASSEUR":
+                if (joueur.attribut === ATTRIBUTS.CHASSEUR)
+                  message.liste = choiceTab;
+                else
+                  message.phase = "TIMER_PHASE";
+                break;
+              
+              case PHASE.VOYANTE:
+                if (joueur.attribut === ATTRIBUTS.VOYANTE)
+                  message.liste = choiceTab;
+                else
+                  message.phase = "TIMER_PHASE";
+                break;
+              
               case "SORCIERE":
                 if (joueur.attribut === ATTRIBUTS.SORCIERE) {
                   message.victime = salle.wolfVictim;
@@ -1126,12 +1152,6 @@ wss.on('connection', function connection(ws) {
                 break;
             }
             ws.send(JSON.stringify(message));
-        }
-        else
-        {
-            console.log('Ce pseudo est deja entrain de jouer');
-            ws.close(4001, "Une seule session autorisée en jeu.");
-            return;
         }
       }
       else{
@@ -1182,6 +1202,7 @@ ws.on('close', (code) => {
     const name = ws.name;
     const roomId = ws.gameId;
     if (!ws.gameId || !salle) return;
+    
     salle.joueurs.delete(ws);
     const joueur = salle.participants[name];
     if (!joueur) return;

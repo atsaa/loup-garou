@@ -139,6 +139,7 @@ function IconPersoAcceuil(){
 function gererRouteURL() {
     const hash = window.location.hash;
     defaultVolumeFunc();
+    console.log("debutons");
     if (!localStorage.getItem('NameLoupGarou')) {
         ecranAccueil.style.display = 'block';
         ecranJeu.style.display = 'none';
@@ -195,10 +196,11 @@ function creerNouvellePartie() {
 function changeSalleHote(gameId){
     const lienDePartage = window.location.origin + '/#join:' + gameId;
     document.getElementById('lien-a-copier').value = lienDePartage;
-    //changeSalle();
+//    changeSalle();
     console.log('en haut de ');
     window.location.assign(lienDePartage);
     console.log('en bas de bas')
+  //  Rejoindre_salle(gameId);
     return ;
 }
 
@@ -290,6 +292,9 @@ function    show_choice_player(data){
     console.log(maire, localStorage.getItem('NameLoupGarou'));
     if (phaseActuelle === 'VOYANTE') {
         titre.textContent = 'La voyante va regarder un role';
+    }
+    else if (phaseActuelle === 'CHASSEUR') {
+        titre.textContent = 'Le chasseur va cibler un joueur';
     }
     else 
     {
@@ -581,7 +586,7 @@ function gererAffichagePhase(newPhase, data) {
             break;
         case "TRANSITION_DAY":
             console.log('ok mon ami');
-            audioMorning();
+            audioJour();
             break;
     }
 }

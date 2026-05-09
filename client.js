@@ -5,8 +5,8 @@ let reference = undefined;
 var Nombre_de_joeur;
 //const socket = new WebSocket('ws://localhost:8080');
 //const socket = new WebSocket('ws:192.168.197.132:8080');
-const isIp = "192.168.1.107";
-const ip = "ws:192.168.1.107:8080";
+const isIp = "192.168.8.133";
+const ip = "ws:192.168.8.133:8080";
 const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
 || window.location.hostname === isIp;
 
@@ -84,6 +84,7 @@ function connecter() {
             }
             else if (messageData.type === 'CLIENT_COUNT') {
                 console.log(messageData);
+                audioRoom(); 
                 if (!salleCree){
                     changeSalle();
                     numsPlayers = messageData.numsPlayersForGame;
@@ -237,6 +238,9 @@ function PeriodeNuit(data){
     console.log("nuit", messageData.phase, phaseActuelle);
     if (phasePeriod !== "NUIT")
         nightGame();
+    if (messageData.phase === "ATTENTE") {
+        audioNight();
+    }
     if (messageData.phase !== phaseActuelle)
         gererAffichagePhase(messageData.phase, messageData);
     if (messageData.phase === 'VOTE_LOUP')
@@ -645,7 +649,7 @@ function send_choice(name){
     else if (phaseActuelle === 'CHASSEUR')
         chasseurSend(name);
     else
-        send_eliminate_by_maire();
+        send_eliminate_by_maire(name);
 }
 
 function neRienFaire(){
