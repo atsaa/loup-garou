@@ -66,17 +66,16 @@ const server = http.createServer((req, res) => {
         case '.png': contentType = 'image/png'; break;
         case '.jpg': contentType = 'image/jpg'; break;
     }
-    /*fs.readFile(filePath, (error, content) => {
+    fs.readFile(filePath, (error, content) => {
         if (error) {
             res.writeHead(404);
             res.end("Fichier non trouvé");
         } else {
             // ✅ On utilise la variable contentType ici !
-            res.writeHead(200, { 'Content-Type': contentType });
+    //        res.writeHead(200, { 'Content-Type': contentType });
             res.end(content, 'utf-8');
         }
-    });*/
-    res.end(contentType, 'utf-8');
+    });
 });
 const wss = new WebSocket.Server({ server });
 
