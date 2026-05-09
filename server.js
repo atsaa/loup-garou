@@ -34,12 +34,12 @@ app.use(compression());
 
 // B. GERER LE CACHE (Pour que le transfert tombe à 0 la 2ème fois)
 // On suppose que tes images/js sont dans un dossier nommé 'public'
-app.use(express.static('/images', {
+app.use('/images',express.static(path.join(__dirname, 'images'), {
   maxAge: '60d' ,
   immutable: true
 }));
 
-app.use(express.static('/music', {
+app.use('/music',express.static(path.join(__dirname, 'music'), {
   maxAge: '60d' ,
   immutable: true
 }));
