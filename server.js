@@ -39,6 +39,11 @@ app.use(express.static('/images', {
   immutable: true
 }));
 
+app.use(express.static('/music', {
+  maxAge: '60d' ,
+  immutable: true
+}));
+
 // C. TA ROUTE PRINCIPALE
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
