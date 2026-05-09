@@ -5,9 +5,9 @@ const sons = {
             wolf: new Audio("music/wolf.mp3"),
             morning: new Audio("music/rooster.mp3"),
             chasseur: new Audio("music/chasseurTir.mp3"),
-            room: new Audio("music/Homeroom.mp3"),
-            jour: new Audio("music/sonGame.mp3"),
-            nuit: new Audio("music/osynthw-midnight.mp3"),
+          //  room: new Audio("music/Homeroom.mp3"),
+          //  jour: new Audio("music/sonGame.mp3"),
+          //  nuit: new Audio("music/osynthw-midnight.mp3"),
             };
 const silencePassePartout = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA");
 
@@ -18,7 +18,7 @@ function debloquerAudio() {
     audioInitialise = true;
     console.log("Audio débloqué pour tous les sons !");
     Object.values(sons).forEach(item=>{item.volume = defaultVolume;});
-    sons.jour.loop = true;
+   // sons.jour.loop = true;
 }
 
 function audioLancement(){
@@ -36,7 +36,7 @@ function audioChasseur(){
     sons.chasseur.play();
     sons.chasseur.volume = defaultVolume;
 }
-
+/*
 function audioRoom(){
     Object.values(sons).forEach(item=>{item.pause(); item.currentTime = 0;})
     sons.room.play();
@@ -54,6 +54,7 @@ function audioJour(){
         sons.jour.play();
     })
 }
+*/
 
 function modifierAudioVolume(value){
     console.log(value);
