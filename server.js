@@ -29,33 +29,16 @@ const { type } = require('os');
 // Crée un serveur WebSocket sur le port 8080
 
 
-
 // A. ACTIVER LA COMPRESSION (Indispensable pour la vitesse)
 app.use(compression());
 
 // B. GERER LE CACHE (Pour que le transfert tombe à 0 la 2ème fois)
 // On suppose que tes images/js sont dans un dossier nommé 'public'
-app.use('/images',express.static(path.join(__dirname, 'images'), {
+app.use(express.static('/images', {
   maxAge: '60d' ,
-  immutable: true,
-  lastModified: true, // Aide Cloudflare à identifier la version du fichier
-  etag: true          // Indispensable pour que Cloudflare valide le cache
+  immutable: true
 }));
 
-app.use('/music', (req, res, next) => {
-  res.set('Cache-Control', 'public, max-age=5184000, immutable');
-  next();
-});
-
-app.use('/music', express.static(path.join(__dirname, 'music')));
-
-/*app.use('/music',express.static(path.join(__dirname, 'music'), {
-  maxAge: '60d' ,
-  immutable: true,
-  lastModified: true, // Aide Cloudflare à identifier la version du fichier
-  etag: true          // Indispensable pour que Cloudflare valide le cache
-}));
-*/
 // C. TA ROUTE PRINCIPALE
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
