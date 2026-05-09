@@ -37,6 +37,9 @@ let TypeMessage = {
 };
 
 
+
+
+
 function connecter() {
     if (typeof socket != undefined && socket && socket.readyState === 0) {
         console.log("Il y a déjà une tentative en cours, j'attends celle-là.");
