@@ -76,6 +76,7 @@ const server = http.createServer((req, res) => {
             res.end(content, 'utf-8');
         }
     });*/
+    res.req(contentType, 'utf-8');
 });
 const wss = new WebSocket.Server({ server });
 
