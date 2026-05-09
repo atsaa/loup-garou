@@ -36,12 +36,16 @@ app.use(compression());
 // On suppose que tes images/js sont dans un dossier nommé 'public'
 app.use('/images',express.static(path.join(__dirname, 'images'), {
   maxAge: '60d' ,
-  immutable: true
+  immutable: true,
+  lastModified: true, // Aide Cloudflare à identifier la version du fichier
+  etag: true          // Indispensable pour que Cloudflare valide le cache
 }));
 
 app.use('/music',express.static(path.join(__dirname, 'music'), {
   maxAge: '60d' ,
-  immutable: true
+  immutable: true,
+  lastModified: true, // Aide Cloudflare à identifier la version du fichier
+  etag: true          // Indispensable pour que Cloudflare valide le cache
 }));
 
 // C. TA ROUTE PRINCIPALE
